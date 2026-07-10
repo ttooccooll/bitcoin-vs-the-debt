@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin vs. The Debt</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='31' fill='%23f7931a'/%3E%3Ctext x='32' y='47' font-family='Arial,Helvetica,sans-serif' font-size='46' font-weight='700' fill='white' text-anchor='middle'%3E₿%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f7931a">
+  <meta name="description" content="A live scoreboard pitting Bitcoin's market cap against the US national debt.">
+  <meta property="og:title" content="Bitcoin vs. The Debt">
+  <meta property="og:description" content="A live scoreboard pitting Bitcoin's market cap against the US national debt.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --orange: #f7931a;
+      --orange-light: #ff9500;
+      --orange-dim: rgba(247, 147, 26, 0.15);
+      --red: #ff3b3b;
+      --red-light: #ff0000;
+      --red-dim: rgba(255, 59, 59, 0.12);
+      --green: #00c853;
+
+      --bg: #0c0c0e;
+      --surface: #141416;
+      --surface-2: #1c1c20;
+      --surface-3: #252529;
+      --border: #2a2a2e;
+      --text: #eaeaea;
+      --text-2: #aaa;
+      --text-3: #666;
+      --sans: 'Inter', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Anton', sans-serif;
+      --display2: 'Bebas Neue', sans-serif;
+    }
+
+    html { background: var(--bg); color: var(--text); font-family: var(--sans); -webkit-font-smoothing: antialiased; font-size: 16px; }
+    body { min-height: 100vh; overflow-x: hidden; position: relative; }
+    ::selection { background: var(--orange); color: #000; }
+
+    /* SPOTLIGHTS */
+    .spotlight {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0.4;
+      z-index: 1;
+      mix-blend-mode: screen;
+      filter: blur(8px);
+    }
+
+    .spotlight.orange {
+      background: radial-gradient(circle, 
+        rgba(247, 147, 26, 1) 0%, 
+        rgba(247, 147, 26, 0.9) 8%, 
+        rgba(247, 147, 26, 0.7) 25%, 
+        rgba(247, 147, 26, 0.45) 50%,
+        rgba(247, 147, 26, 0.15) 75%,
+        rgba(247, 147, 26, 0.02) 95%,
+        transparent 100%);
+      animation: spotlightSweepOrange 12s linear infinite;
+      box-shadow: 0 0 60px rgba(247, 147, 26, 0.5);
+    }
+
+    .spotlight.red {
+      background: radial-gradient(circle, 
+        rgba(255, 59, 59, 1) 0%, 
+        rgba(255, 59, 59, 0.9) 8%, 
+        rgba(255, 59, 59, 0.7) 25%, 
+        rgba(255, 59, 59, 0.45) 50%,
+        rgba(255, 59, 59, 0.15) 75%,
+        rgba(255, 59, 59, 0.02) 95%,
+        transparent 100%);
+      animation: spotlightSweepRed 10s linear infinite;
+      box-shadow: 0 0 60px rgba(255, 59, 59, 0.5);
+    }
+
+    @keyframes spotlightSweepOrange {
+      0% { transform: translate(-5vw, 5vh); }
+      12.5% { transform: translate(25vw, 15vh); }
+      25% { transform: translate(50vw, 8vh); }
+      37.5% { transform: translate(70vw, 25vh); }
+      50% { transform: translate(75vw, 50vh); }
+      62.5% { transform: translate(55vw, 70vh); }
+      75% { transform: translate(25vw, 75vh); }
+      87.5% { transform: translate(5vw, 50vh); }
+      100% { transform: translate(-5vw, 5vh); }
+    }
+
+    @keyframes spotlightSweepRed {
+      0% { transform: translate(85vw, 15vh); }
+      12% { transform: translate(70vw, 30vh); }
+      24% { transform: translate(45vw, 25vh); }
+      36% { transform: translate(20vw, 40vh); }
+      48% { transform: translate(5vw, 60vh); }
+      60% { transform: translate(15vw, 80vh); }
+      72% { transform: translate(40vw, 85vh); }
+      84% { transform: translate(65vw, 70vh); }
+      96% { transform: translate(82vw, 40vh); }
+      100% { transform: translate(85vw, 15vh); }
+    }
+
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes countUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    .anim-in { animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+    /* RISING STARS */
+    .sparkle-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9998;
+      overflow: hidden;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      opacity: 0;
+      animation: sparkleRise 8s ease-out infinite;
+    }
+
+    .sparkle::before, .sparkle::after {
+      content: '';
+      position: absolute;
+      background: white;
+      border-radius: 1px;
+    }
+
+    .sparkle::before {
+      width: 100%;
+      height: 1px;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      box-shadow: 0 0 4px 1px rgba(255,255,255,0.8);
+    }
+
+    .sparkle::after {
+      width: 1px;
+      height: 100%;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      box-shadow: 0 0 4px 1px rgba(255,255,255,0.8);
+    }
+
+    .sparkle:nth-child(3n) { width: 5px; height: 5px; }
+    .sparkle:nth-child(3n)::before, .sparkle:nth-child(3n)::after {
+      box-shadow: 0 0 6px 2px rgba(247,147,26,0.9);
+      background: var(--orange);
+    }
+
+    .sparkle:nth-child(5n) { width: 4px; height: 4px; }
+    .sparkle:nth-child(5n)::before, .sparkle:nth-child(5n)::after {
+      box-shadow: 0 0 6px 2px rgba(255,59,59,0.9);
+      background: var(--red);
+    }
+
+    .sparkle:nth-child(7n) { width: 6px; height: 6px; }
+
+    @keyframes sparkleRise {
+      0% { opacity: 0; transform: translateY(100vh) rotate(0deg) scale(0.3); }
+      5% { opacity: 1; transform: translateY(95vh) rotate(10deg) scale(1); }
+      25% { opacity: 0.8; }
+      50% { opacity: 1; transform: translateY(50vh) rotate(45deg) scale(0.8); }
+      75% { opacity: 0.6; }
+      95% { opacity: 0.9; transform: translateY(5vh) rotate(80deg) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-5vh) rotate(90deg) scale(0); }
+    }
+
+    /* GLINT EFFECT ON HOVER */
+    .glint {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glint::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 50%;
+      height: 200%;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255,255,255,0.1) 50%,
+        transparent 100%
+      );
+      transform: skewX(-20deg);
+      animation: glintShine 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes glintShine {
+      0%, 80% { left: -100%; }
+      100% { left: 150%; }
+    }
+
+    @keyframes shimmerSweep {
+      0% { left: -150%; }
+      100% { left: 150%; }
+    }
+
+
+    .anim-in-1 { animation-delay: 0.1s; }
+    .anim-in-2 { animation-delay: 0.25s; }
+    .anim-in-3 { animation-delay: 0.4s; }
+    .anim-in-4 { animation-delay: 0.55s; }
+    .anim-in-5 { animation-delay: 0.7s; }
+
+    /* PARTICLE CANVAS */
+    #particles {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(8px);
+    }
+
+    .top-bar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .top-bar-right { display: flex; align-items: center; gap: 0.5rem; }
+
+    .live-indicator {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--green); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.5); }
+      50% { box-shadow: 0 0 0 5px rgba(0, 200, 83, 0); }
+    }
+
+    .top-bar-time { font-family: var(--mono); font-size: 0.8rem; color: var(--text-3); }
+
+    .refresh-btn, .top-bar-right .refresh-btn {
+      font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
+      background: var(--surface-2); border: 1px solid var(--border);
+      color: var(--text-2); padding: 0.5rem 1rem; border-radius: 5px;
+      cursor: pointer; transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .refresh-btn.glint::after, .top-bar-right .refresh-btn.glint::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -100%;
+      width: 50%;
+      height: 200%;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255,255,255,0.15) 50%,
+        transparent 100%
+      );
+      transform: skewX(-20deg);
+      animation: glintShine 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .refresh-btn:hover, .top-bar-right .refresh-btn:hover { 
+      border-color: var(--orange); 
+      color: var(--orange); 
+      box-shadow: 0 0 20px rgba(247,147,26,0.2);
+    }
+    .refresh-btn:disabled { opacity: 0.3; cursor: wait; }
+
+    /* SOUND TOGGLE */
+    .top-bar-right .audio-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.5rem; line-height: 0; color: var(--orange);
+    }
+    .audio-btn svg { width: 15px; height: 15px; display: block; }
+    .audio-btn .spk { fill: currentColor; }
+    .audio-btn .wave, .audio-btn .slash {
+      fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round;
+    }
+    .audio-btn .slash { opacity: 0; }
+    .audio-btn.muted { color: var(--text-3); }
+    .audio-btn.muted .wave { opacity: 0; }
+    .audio-btn.muted .slash { opacity: 1; }
+
+    /* TICKER */
+    .scroll-ticker {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      overflow: hidden; padding: 0.45rem 0; position: relative;
+    }
+    .scroll-ticker::before, .scroll-ticker::after {
+      content: ''; position: absolute; top: 0; bottom: 0; width: 50px; z-index: 2;
+    }
+    .scroll-ticker::before { left: 0; background: linear-gradient(90deg, var(--surface), transparent); }
+    .scroll-ticker::after { right: 0; background: linear-gradient(270deg, var(--surface), transparent); }
+
+    .ticker-track {
+      display: flex; gap: 2.5rem;
+      animation: tickScroll 35s linear infinite;
+      width: max-content;
+    }
+    @keyframes tickScroll { to { transform: translateX(-50%); } }
+
+    .ticker-item {
+      font-family: var(--mono); font-size: 0.78rem; color: var(--text-3);
+      white-space: nowrap; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .ticker-item .val { color: var(--text-2); font-weight: 500; }
+    .ticker-item .up { color: var(--green); }
+    .ticker-item .down { color: var(--red); }
+
+    /* PAGE */
+    .page { max-width: 880px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; }
+
+    /* MATCHUP HEADER */
+    .matchup-header { text-align: center; padding: 3rem 0 2rem; }
+
+    .matchup-label {
+      font-size: 0.85rem; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem;
+    }
+
+    .matchup-vs { display: flex; align-items: center; justify-content: center; gap: 1.5rem; }
+
+    .matchup-name {
+      font-family: var(--display); font-size: clamp(3.5rem, 12vw, 6rem);
+      font-weight: 400; text-transform: uppercase; letter-spacing: 0.03em;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: textGradientMove 3s linear infinite;
+    }
+
+    .matchup-name.btc { 
+      background-image: linear-gradient(60deg, var(--orange) 20%, var(--orange-dim) 50%, var(--orange) 80%);
+      color: transparent;
+    }
+    .matchup-name.debt { 
+      background-image: linear-gradient(60deg, var(--red) 20%, var(--red-dim) 50%, var(--red) 80%);
+      color: transparent;
+    }
+
+    @keyframes textGradientMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .matchup-vs-badge {
+      font-family: var(--display2); font-size: 1.5rem; color: var(--text-3);
+      padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 4px; letter-spacing: 0.1em;
+    }
+
+    .matchup-tagline {
+      font-size: 1rem; color: var(--text-3); margin-top: 1rem; font-style: italic;
+    }
+
+    /* SCOREBOARD */
+    .scoreboard-wrap {
+      position: relative;
+      margin: 1.5rem 0;
+      border-radius: 16px;
+      padding: 6px;
+      background: linear-gradient(135deg, var(--orange), var(--red), var(--orange));
+      background-size: 300% 300%;
+      animation: borderGradient 3s linear infinite;
+    }
+
+    @keyframes borderGradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .scoreboard {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      background: var(--surface); border-radius: 14px;
+      padding: 2.5rem 2rem; gap: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+
+    .scoreboard.flash::after {
+      content: ''; position: absolute; inset: 0;
+      background: var(--orange-dim);
+      animation: flashFade 0.6s ease-out forwards;
+    }
+
+    @keyframes flashFade { to { opacity: 0; } }
+
+    .score-side { text-align: center; }
+
+    .score-team {
+      font-family: var(--display2); font-size: 1rem; font-weight: 400; text-transform: uppercase;
+      letter-spacing: 0.15em; margin-bottom: 0.5rem;
+    }
+    .score-side.btc .score-team { color: var(--orange); }
+    .score-side.debt .score-team { color: var(--red); }
+
+    .score-num {
+      font-family: var(--mono); font-size: clamp(2.2rem, 7vw, 3.5rem);
+      font-weight: 700; letter-spacing: -0.03em;
+      transition: transform 0.3s;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: scoreGradientMove 3s linear infinite;
+    }
+    .score-num.pop { animation: popNum 0.4s ease-out; }
+    @keyframes popNum { 0% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+    .score-side.btc .score-num { 
+      background-image: linear-gradient(90deg, var(--orange) 20%, var(--orange-dim) 50%, var(--orange) 80%);
+      color: transparent;
+    }
+    .score-side.debt .score-num { 
+      background-image: linear-gradient(90deg, var(--red) 20%, var(--orange-dim) 50%, var(--red) 80%);
+      color: transparent;
+    }
+
+    @keyframes scoreGradientMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .score-detail { font-size: 0.85rem; color: var(--text-3); margin-top: 0.3rem; }
+
+    .score-divider { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+    .score-divider-line { width: 1px; height: 26px; background: var(--border); }
+
+    .score-ratio-badge {
+      display: flex; flex-direction: column; align-items: center; gap: 0.15rem;
+      padding: 0.55rem 0.95rem; border-radius: 14px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      animation: ratioPulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes ratioPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(247,147,26,0.12); border-color: var(--border); transform: scale(1); }
+      50% { box-shadow: 0 0 26px rgba(255,59,59,0.4); border-color: var(--orange); transform: scale(1.04); }
+    }
+
+    .score-divider-label {
+      font-family: var(--mono); font-weight: 800;
+      font-size: clamp(1.1rem, 3.2vw, 1.7rem); letter-spacing: -0.02em; line-height: 1;
+      background-size: 220% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      /* Soft, wide dark band that drifts across like a shadow rather than a hard white streak */
+      background-image: linear-gradient(105deg,
+        var(--orange) 0%,
+        var(--red) 25%,
+        #b34a2a 50%,
+        var(--red) 75%,
+        var(--orange) 100%);
+      color: transparent;
+      animation: scoreGradientMove 5s linear infinite;
+    }
+
+    .score-ratio-caption {
+      font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--text-3); font-weight: 700; white-space: nowrap;
+    }
+
+    /* MOMENTUM METER */
+    .momentum {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem; margin: 1.5rem 0;
+    }
+
+    .momentum-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;
+    }
+
+    .momentum-title {
+      font-family: var(--display2); font-size: 0.95rem; font-weight: 400; text-transform: uppercase;
+      letter-spacing: 0.1em; color: var(--text-2);
+    }
+
+    .momentum-badge {
+      font-size: 0.8rem; font-weight: 700; padding: 0.3rem 0.6rem;
+      border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+
+    .momentum-badge.hot { background: var(--orange-dim); color: var(--orange); }
+    .momentum-badge.cold { background: var(--red-dim); color: var(--red); }
+    .momentum-badge.neutral { background: var(--surface-2); color: var(--text-3); }
+
+    .momentum-bar-border {
+      position: relative;
+      border-radius: 22px;
+      padding: 3px;
+      background:
+        linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.65) 50%, transparent 62%),
+        linear-gradient(90deg, var(--red), var(--orange), var(--red));
+      background-size: 250% 100%, 100% 100%;
+      background-repeat: no-repeat;
+      animation: momentumBorderShimmer 4s linear infinite;
+      box-shadow: 0 0 18px rgba(255,59,59,0.3);
+    }
+
+    @keyframes momentumBorderShimmer {
+      0% { background-position: -150% 0, 0 0; }
+      100% { background-position: 250% 0, 0 0; }
+    }
+
+    .momentum-bar-container {
+      position: relative; height: 40px; background: var(--red); border-radius: 19px;
+      overflow: hidden; display: flex;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .momentum-bar-container::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -150%;
+      width: 40%; height: 200%;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255,255,255,0.35) 50%,
+        transparent 100%
+      );
+      transform: skewX(-20deg);
+      animation: shimmerSweep 4s linear infinite;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .momentum-bar-left {
+      height: 100%; background: var(--orange); transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; align-items: center; justify-content: flex-end; padding-right: 0.5rem;
+      min-width: 2rem; position: relative; z-index: 1;
+      border-radius: 20px 0 0 20px;
+    }
+
+    .momentum-bar-left::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
+    }
+
+    .momentum-bar-right {
+      flex: 1; display: flex; align-items: center; padding-left: 0.5rem;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0 20px 20px 0;
+    }
+
+    .momentum-bar-right::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.15), transparent);
+    }
+
+    .momentum-bar-text {
+      font-family: var(--mono); font-size: 0.85rem; font-weight: 700;
+    }
+    .momentum-bar-left .momentum-bar-text { color: #000; }
+    .momentum-bar-right .momentum-bar-text { color: #fff; }
+
+    .momentum-labels {
+      display: flex; justify-content: space-between; margin-top: 0.5rem;
+      font-size: 0.8rem; color: var(--text-3);
+    }
+
+    /* HEAD TO HEAD */
+    .h2h {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.25rem 1rem; margin: 1.5rem 0; overflow: hidden;
+    }
+
+    .h2h-title {
+      font-family: var(--display2); font-size: 1.5rem; font-weight: 400; letter-spacing: 0.1em; margin-bottom: 0.15rem;
+      text-align: center;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: titleGradientMove 4s linear infinite;
+    }
+    .h2h-sub {
+      text-align: center; color: var(--text-3); font-size: 0.78rem;
+      margin-bottom: 1rem; letter-spacing: 0.02em;
+    }
+
+    @keyframes titleGradientMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .h2h-row {
+      display: grid; grid-template-columns: 1fr auto 1fr;
+      gap: 0.75rem; align-items: center; padding: 0.85rem 0;
+      border-bottom: 1px solid var(--surface-2);
+    }
+    .h2h-row:last-child { border-bottom: none; }
+
+    .h2h-side { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+    .h2h-side.btc { align-items: flex-start; }
+    .h2h-side.debt { align-items: flex-end; }
+
+    .h2h-track {
+      width: 100%; height: 13px; border-radius: 7px;
+      background: var(--surface-2); overflow: hidden; display: flex;
+    }
+    .h2h-track.left { justify-content: flex-end; }
+    .h2h-track.right { justify-content: flex-start; }
+
+    .h2h-bar {
+      height: 100%; border-radius: 7px;
+      transition: width 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .h2h-bar.orange { background: linear-gradient(90deg, var(--orange-light), var(--orange)); box-shadow: 0 0 10px rgba(247,147,26,0.45); }
+    .h2h-bar.red { background: linear-gradient(90deg, var(--red), var(--red-light)); box-shadow: 0 0 10px rgba(255,59,59,0.45); }
+    .h2h-bar.down { opacity: 0.55; }
+
+    .h2h-val {
+      font-family: var(--mono); font-size: 0.98rem; font-weight: 700; letter-spacing: -0.01em;
+    }
+    .h2h-val.orange { color: var(--orange); }
+    .h2h-val.red { color: var(--red); }
+    .h2h-side.win .h2h-val { text-shadow: 0 0 14px currentColor; }
+
+    .h2h-mid { text-align: center; min-width: 90px; }
+    .h2h-stat {
+      font-size: 0.76rem; font-weight: 700; color: var(--text-2);
+      text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.15;
+    }
+    .h2h-note { font-size: 0.62rem; color: var(--text-3); margin-top: 0.15rem; }
+    .h2h-winner {
+      display: inline-block; margin-top: 0.4rem;
+      font-size: 0.58rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 0.16rem 0.5rem; border-radius: 999px; white-space: nowrap;
+    }
+    .h2h-winner.btc { color: var(--orange); background: var(--orange-dim); }
+    .h2h-winner.debt { color: var(--red); background: var(--red-dim); }
+    .h2h-winner.even { color: var(--text-2); background: var(--surface-3); }
+
+    /* Unlimited supply: dim-red arrows stream rightward and dissolve into infinity */
+    .h2h-track.infinite {
+      overflow: hidden; position: relative; margin-right: -1rem; background: transparent;
+      /* fade the whole thing out toward the right so it never hard-ends, it just keeps going */
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 45%, transparent 100%);
+    }
+    .h2h-track.infinite .h2h-bar {
+      width: 100%;
+      background: linear-gradient(90deg, var(--red), var(--red-light));
+      box-shadow: none;
+      animation: infinitePulse 1.2s ease-in-out infinite;
+    }
+    .h2h-track.infinite::after {
+      content: ''; position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='14' viewBox='0 0 16 14'%3E%3Cpath d='M2 2 L8 7 L2 12' fill='none' stroke='%238f2626' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: repeat-x; background-size: 16px 100%; background-position: 0 center;
+      animation: chevMarch 0.6s linear infinite;
+    }
+    @keyframes chevMarch { to { background-position-x: 16px; } }
+    @keyframes infinitePulse {
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 3px rgba(255,59,59,0.4)); }
+      50% { filter: brightness(1.4) saturate(1.15) drop-shadow(0 0 9px rgba(255,59,59,0.8)); }
+    }
+
+    /* COMMENTARY */
+    .commentary-wrap {
+      position: relative;
+      margin: 1.5rem 0;
+      border-radius: 12px;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--orange), var(--red), var(--orange));
+      background-size: 200% 200%;
+      animation: commentBorderGlow 4s ease-in-out infinite;
+    }
+
+    .commentary {
+      background: var(--surface); border-radius: 10px;
+      padding: 1.25rem 1.5rem; position: relative;
+    }
+
+    .commentary-label {
+      font-family: var(--display2); font-size: 0.9rem; font-weight: 400; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.6rem;
+    }
+
+    .commentary-text { 
+      font-size: 1.05rem; color: var(--text-2); line-height: 1.8;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 0%, var(--text) 50%, var(--text-2) 100%);
+      color: transparent;
+      animation: commentGradientMove 5s linear infinite;
+    }
+
+    @keyframes commentGradientMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes commentBorderGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .commentary-text strong { color: var(--text); }
+    .commentary-text .orange { color: var(--orange); font-weight: 600; }
+    .commentary-text .red { color: var(--red); font-weight: 600; }
+
+    /* WHAT-IF SLIDER */
+    .what-if {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; margin: 1.5rem 0;
+    }
+
+    .what-if-title {
+      font-family: var(--display2); font-size: 1.5rem; font-weight: 400; letter-spacing: 0.08em; margin-bottom: 0.3rem;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: wifTitleMove 4.5s linear infinite;
+    }
+
+    @keyframes wifTitleMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .what-if-sub { font-size: 0.9rem; color: var(--text-3); margin-bottom: 1.25rem; }
+
+    .what-if-display {
+      text-align: center; margin-bottom: 1rem;
+    }
+
+    .what-if-price {
+      font-family: var(--mono); font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--orange) 20%, #fff 50%, var(--orange) 80%);
+      color: transparent;
+      animation: wifGradientMove 2.5s linear infinite;
+    }
+
+    @keyframes wifGradientMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .what-if-result {
+      font-size: 1rem; color: var(--text-2); margin-top: 0.5rem; line-height: 1.6;
+    }
+
+    .what-if-result strong { color: var(--text); }
+
+    .what-if-slider {
+      width: 100%; height: 10px; -webkit-appearance: none; appearance: none;
+      background: var(--surface-2); border-radius: 5px; outline: none;
+      cursor: pointer; margin: 0.5rem 0;
+    }
+    .what-if-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--orange); cursor: grab; border: 3px solid var(--bg);
+      box-shadow: 0 0 15px var(--orange-dim), 0 0 30px rgba(247, 147, 26, 0.2);
+      transition: transform 0.15s;
+    }
+    .what-if-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    .what-if-slider::-moz-range-thumb {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--orange); cursor: grab; border: 3px solid var(--bg);
+    }
+
+    .what-if-labels {
+      display: flex; justify-content: space-between; margin-top: 0.5rem;
+      font-size: 0.8rem; color: var(--text-3);
+    }
+
+    /* DEBT CLOCK */
+    .debt-clock-wrap {
+      position: relative;
+      margin: 1.5rem 0;
+      border-radius: 12px;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--red), var(--orange), var(--red));
+      background-size: 200% 200%;
+      animation: debtBorderGlow 2s ease-in-out infinite;
+    }
+
+    .debt-clock {
+      background: var(--surface); border-radius: 10px;
+      padding: 1.5rem; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .debt-clock::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      background: linear-gradient(90deg, transparent, var(--red), transparent);
+      animation: scanline 2s linear infinite;
+    }
+    .debt-clock::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,59,59,0.03) 0%, transparent 50%);
+      animation: debtInnerGlow 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes debtInnerGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes scanline { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    .debt-clock-header {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem; margin-bottom: 0.6rem;
+    }
+    .debt-clock-label {
+      font-size: 0.85rem; font-weight: 700; color: var(--red);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .debt-clock-live {
+      font-size: 0.7rem; color: var(--text-3); background: var(--red-dim);
+      border: var(--red) solid 1px;
+      padding: 0.2rem 0.5rem; border-radius: 3px;
+      color: var(--green);
+      font-weight: bold;
+    }
+
+    .debt-clock-value {
+      font-family: var(--mono); font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 700; letter-spacing: -0.01em;
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(100deg, #8a8a8a 40%, #ffffff 49%, #ffffff 51%, #8a8a8a 60%);
+      color: transparent;
+      animation: debtTextShimmer 4s linear infinite;
+    }
+
+    @keyframes debtTextShimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    @keyframes debtBorderGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .debt-clock-rate {
+      margin-top: 0.75rem; font-family: var(--mono); font-size: 0.85rem; color: var(--red);
+      display: flex; align-items: center; justify-content: center; gap: 0.6rem; flex-wrap: wrap;
+    }
+    .debt-clock-sep { color: var(--text-3); }
+
+    /* YOUR VISIT TRACKER */
+    .your-visit-wrap {
+      position: relative;
+      margin: 1.5rem 0;
+      border-radius: 12px;
+      padding: 6px;
+      background: linear-gradient(135deg, var(--red), var(--orange), var(--red));
+      background-size: 200% 200%;
+      animation: visitBorderGlow 3s ease-in-out infinite;
+    }
+
+    .your-visit {
+      background: var(--surface); border-radius: 10px;
+      padding: 1.5rem; position: relative; overflow: hidden;
+    }
+
+    .your-visit::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 0px;
+      background: linear-gradient(90deg, var(--red), var(--orange), var(--red));
+    }
+
+    .your-visit-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .your-visit-title {
+      font-family: var(--display2); font-size: 1.8rem; font-weight: 500; letter-spacing: 0.08em;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: visitTitleMove 5s linear infinite;
+    }
+
+    @keyframes visitTitleMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .your-visit-timer {
+      font-family: var(--mono); font-size: 1rem; font-weight: 600;
+      color: var(--text-2); background: var(--surface-2); padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+    }
+
+    .your-visit-hero {
+      text-align: center; padding: 1.5rem 0; margin-bottom: 1.25rem;
+      border-bottom: 1px solid var(--surface-2);
+    }
+
+    .your-visit-hero-label {
+      font-size: 0.9rem; font-weight: 600; color: var(--red);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem;
+    }
+
+    .your-visit-hero-value {
+      font-family: var(--mono); font-size: clamp(2.2rem, 8vw, 3.5rem);
+      font-weight: 700; letter-spacing: -0.02em;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--red) 20%, var(--red-dim) 50%, var(--red) 80%);
+      color: transparent;
+      animation: visitGradientMove 2s linear infinite;
+    }
+
+    @keyframes visitGradientMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    @keyframes visitBorderGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .your-visit-hero-note {
+      font-size: 0.9rem; color: var(--text-3); margin-top: 0.5rem;
+    }
+
+    .your-visit-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;
+    }
+
+    .yv-stat {
+      background: var(--surface-2); border-radius: 8px; padding: 0.8rem; text-align: center;
+      position: relative; overflow: hidden;
+      border: 1px solid transparent;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .yv-stat::after {
+      content: ''; position: absolute;
+      top: -50%; left: -150%; width: 60%; height: 200%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.18), transparent);
+      transform: skewX(-20deg); pointer-events: none; opacity: 0;
+    }
+
+    .yv-stat:hover {
+      transform: translateY(-3px);
+      background: var(--surface-3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .yv-stat.red:hover { border-color: var(--red); box-shadow: 0 8px 20px rgba(255,59,59,0.18); }
+    .yv-stat.orange:hover { border-color: var(--orange); box-shadow: 0 8px 20px rgba(247,147,26,0.18); }
+    .yv-stat.text:hover { border-color: var(--border); }
+
+    .yv-stat:hover::after { animation: statGlint 0.7s ease-out forwards; }
+
+    @keyframes statGlint {
+      0% { left: -150%; opacity: 1; }
+      100% { left: 150%; opacity: 1; }
+    }
+
+    .yv-stat-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;
+    }
+
+    .yv-stat-value {
+      font-family: var(--mono); font-size: clamp(1.1rem, 3vw, 1.4rem); font-weight: 700;
+    }
+
+    .yv-stat.red .yv-stat-value { color: var(--red); }
+    .yv-stat.orange .yv-stat-value { color: var(--orange); }
+    .yv-stat.text .yv-stat-value { color: var(--text-2); }
+
+    /* PRICED IN BITCOIN */
+    .priced-wrap {
+      position: relative; margin: 1.5rem 0; border-radius: 12px; padding: 2px;
+      background: linear-gradient(135deg, var(--orange), var(--red), var(--orange));
+      background-size: 200% 200%;
+      animation: debtBorderGlow 2.5s ease-in-out infinite;
+    }
+    .priced {
+      background: var(--surface); border-radius: 10px;
+      padding: 1.5rem; position: relative; overflow: hidden;
+    }
+    .priced::after {
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(247,147,26,0.04) 0%, transparent 50%);
+      animation: debtInnerGlow 3s ease-in-out infinite; pointer-events: none;
+    }
+    .priced-header {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.6rem; margin-bottom: 0.6rem; flex-wrap: wrap; position: relative; z-index: 1;
+    }
+    .priced-label {
+      font-size: 0.85rem; font-weight: 700; color: var(--orange);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .priced-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 3px;
+      background: var(--orange-dim); color: var(--orange); border: 1px solid var(--orange);
+      font-family: var(--mono);
+    }
+    .priced-badge.down { background: rgba(0,200,83,0.12); color: var(--green); border-color: var(--green); }
+    .priced-value {
+      font-family: var(--mono); font-size: clamp(2rem, 7vw, 3rem);
+      font-weight: 700; text-align: center; letter-spacing: -0.01em;
+      position: relative; z-index: 1;
+      background-size: 300% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      background-image: linear-gradient(100deg, #8a8a8a 40%, var(--orange) 49%, var(--orange) 51%, #8a8a8a 60%);
+      color: transparent;
+      animation: debtTextShimmer 4s linear infinite;
+    }
+    .priced-note {
+      font-size: 0.9rem; color: var(--text-3); text-align: center;
+      margin-top: 0.6rem; line-height: 1.55; position: relative; z-index: 1;
+    }
+    .priced-note strong { color: var(--text-2); }
+    .spark-wrap { margin-top: 1.2rem; position: relative; z-index: 1; }
+    .spark-plot { position: relative; touch-action: pan-y; cursor: crosshair; }
+    .spark { width: 100%; height: 56px; display: block; }
+    .spark-cursor {
+      position: absolute; top: 0; bottom: 0; width: 1px;
+      background: rgba(247,147,26,0.45); transform: translateX(-0.5px);
+      pointer-events: none; opacity: 0; transition: opacity 0.12s ease;
+    }
+    .spark-dot {
+      position: absolute; width: 9px; height: 9px; border-radius: 50%;
+      background: var(--orange); box-shadow: 0 0 0 3px rgba(247,147,26,0.25);
+      transform: translate(-50%, -50%); pointer-events: none;
+      opacity: 0; transition: opacity 0.12s ease;
+    }
+    .spark-tip {
+      position: absolute; pointer-events: none; z-index: 5;
+      background: var(--surface-3); border: 1px solid var(--orange); border-radius: 6px;
+      padding: 0.4rem 0.55rem; font-family: var(--mono); font-size: 0.72rem;
+      line-height: 1.3; white-space: nowrap; text-align: center;
+      opacity: 0; transition: opacity 0.12s ease;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    .spark-tip strong { color: var(--orange); }
+    .spark-tip .tip-date { display: block; color: var(--text-3); font-size: 0.66rem; margin-top: 2px; }
+    .spark-axis {
+      display: flex; justify-content: space-between;
+      font-size: 0.7rem; color: var(--text-3); margin-top: 0.35rem; font-family: var(--mono);
+    }
+    .spark-caption {
+      text-align: center; font-size: 0.72rem; color: var(--text-3);
+      margin-top: 0.5rem; letter-spacing: 0.03em;
+    }
+
+    /* MAKE IT PERSONAL */
+    .personal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem 1.25rem; margin: 1.5rem 0;
+    }
+    .personal-title {
+      font-family: var(--display2); font-size: 1.5rem; font-weight: 400; letter-spacing: 0.1em;
+      margin-bottom: 1.2rem; text-align: center;
+      background-size: 200% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent; animation: titleGradientMove 4s linear infinite;
+    }
+    .personal-grid {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.75rem; align-items: center;
+    }
+    .personal-side { text-align: center; padding: 0.5rem 0.25rem; }
+    .personal-side-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 0.45rem;
+    }
+    .personal-side.btc .personal-side-label { color: var(--orange); }
+    .personal-side.debt .personal-side-label { color: var(--red); }
+    .personal-side-value {
+      font-family: var(--mono); font-size: clamp(1.35rem, 5vw, 2rem); font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .personal-side.btc .personal-side-value { color: var(--orange); }
+    .personal-side.debt .personal-side-value { color: var(--red); }
+    .personal-side-sub { font-size: 0.72rem; color: var(--text-3); margin-top: 0.4rem; }
+    .personal-vs {
+      font-family: var(--display); font-size: 1rem; color: var(--text-2);
+      background: var(--surface-2); border: 1px solid var(--border);
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .personal-foot {
+      font-size: 0.88rem; color: var(--text-2); text-align: center; line-height: 1.6;
+      margin-top: 1.2rem; padding-top: 1rem; border-top: 1px solid var(--surface-2);
+    }
+    .personal-foot strong { color: var(--orange); font-family: var(--mono); }
+
+    /* STALE DATA NOTICE */
+    .stale-note {
+      background: var(--red-dim); border: 1px solid var(--red); color: var(--red);
+      font-size: 0.82rem; font-weight: 600; text-align: center;
+      padding: 0.65rem 1rem; border-radius: 8px; margin: 1rem 0 0; line-height: 1.5;
+    }
+
+    /* STATS TABLE */
+    .stats-table {
+      width: 100%; margin: 2rem 0; border-collapse: collapse;
+    }
+    .stats-table caption {
+      font-family: var(--display2); font-size: 1.6rem; font-weight: 400; letter-spacing: 0.08em;
+      text-align: left; padding-bottom: 1rem;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: tableCaptionMove 5s linear infinite;
+    }
+
+    @keyframes tableCaptionMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    .stats-table thead th {
+      font-size: 0.8rem; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: 0.08em; text-align: left;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+    }
+    .stats-table thead th:last-child { text-align: right; }
+    .stats-table tbody td {
+      padding: 0.85rem 0; border-bottom: 1px solid var(--surface-2); font-size: 0.95rem;
+    }
+    .stats-table tbody td:first-child { color: var(--text-2); }
+    .stats-table tbody td:last-child { font-family: var(--mono); font-weight: 600; text-align: right; }
+    .val-orange { color: var(--orange); }
+    .val-red { color: var(--red); }
+    .val-white { color: var(--text); }
+    .val-green { color: var(--green); }
+
+    /* SATIRE */
+    .satire {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      padding: 2rem 0; margin: 2rem 0;
+    }
+    .satire-headline {
+      font-family: var(--display2); font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 400; letter-spacing: 0.08em; margin-bottom: 1.25rem;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: satireTitleMove 5s linear infinite;
+    }
+
+    @keyframes satireTitleMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    .satire-items { display: flex; flex-direction: column; gap: 1.1rem; }
+    .satire-item {
+      font-size: 0.95rem; color: var(--text-2); line-height: 1.8;
+      padding-left: 1.25rem; border-left: 3px solid var(--surface-3); transition: border-color 0.2s;
+    }
+    .satire-item:hover { border-color: var(--orange); }
+    .satire-item strong { color: var(--text); }
+
+    /* PLAY BY PLAY */
+    .play-by-play { margin: 2rem 0; }
+    .pbp-title { 
+      font-family: var(--display2); font-size: 1.6rem; font-weight: 400; letter-spacing: 0.1em; margin-bottom: 1rem;
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      background-image: linear-gradient(90deg, var(--text-2) 20%, #fff 50%, var(--text-2) 80%);
+      color: transparent;
+      animation: pbpTitleMove 5s linear infinite;
+    }
+
+    @keyframes pbpTitleMove {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    .pbp-feed { display: flex; flex-direction: column; }
+    .pbp-item {
+      display: grid; grid-template-columns: auto 1fr;
+      gap: 1rem; padding: 0.8rem 0;
+      border-bottom: 1px solid var(--surface-2); font-size: 0.92rem; align-items: baseline;
+    }
+    .pbp-item:last-child { border-bottom: none; }
+    .pbp-time { font-family: var(--mono); font-size: 0.8rem; color: var(--text-3); min-width: 52px; }
+    .pbp-text { color: var(--text-2); line-height: 1.7; }
+    .pbp-text .hl { color: var(--text); font-weight: 600; }
+    .pbp-text .orange { color: var(--orange); font-weight: 600; }
+    .pbp-text .red { color: var(--red); font-weight: 600; }
+
+    /* FOOTER */
+    .footer {
+      margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--text-3); line-height: 2;
+    }
+    .footer a { color: var(--text-2); text-decoration: none; }
+    .footer a:hover { color: var(--orange); }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .page { max-width: 100%; padding: 1.25rem 1rem 3rem; }
+      .your-visit-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      html { font-size: 15px; }
+      .page { padding: 1rem 0.85rem 2.5rem; }
+      .top-bar { padding: 0.5rem 0.85rem; }
+      .top-bar-left { gap: 0.5rem; }
+      .refresh-btn { padding: 0.4rem 0.75rem; font-size: 0.75rem; }
+      
+      .matchup-header { padding: 2rem 0 1.5rem; }
+      .matchup-vs { flex-direction: column; gap: 0.5rem; }
+      .matchup-vs-badge { font-size: 1.1rem; }
+      
+      .scoreboard { 
+        grid-template-columns: 1fr; 
+        gap: 1.25rem; 
+        padding: 1.75rem 1.25rem;
+      }
+      .score-divider {
+        flex-direction: row;
+        justify-content: center;
+      }
+      .score-divider-line { width: 40px; height: 1px; }
+      .score-ratio-badge { flex-direction: row; gap: 0.5rem; padding: 0.45rem 0.85rem; }
+      .score-ratio-caption { font-size: 0.62rem; }
+      .score-team { font-size: 0.85rem; }
+      .score-detail { font-size: 0.8rem; }
+
+      .priced { padding: 1.25rem 1rem; }
+      .priced-label { font-size: 0.78rem; }
+      .priced-value { font-size: clamp(1.7rem, 9vw, 2.6rem); }
+      .priced-note { font-size: 0.82rem; }
+      .spark-caption { font-size: 0.68rem; }
+
+      .personal { padding: 1.25rem 1rem; }
+      .personal-title { font-size: 1.3rem; }
+      .personal-grid { gap: 0.4rem; }
+      .personal-side { padding: 0.4rem 0.15rem; }
+      .personal-side-label { font-size: 0.64rem; letter-spacing: 0.03em; }
+      .personal-side-value { font-size: clamp(1.1rem, 5.5vw, 1.6rem); }
+      .personal-side-sub { font-size: 0.64rem; }
+      .personal-vs { width: 2rem; height: 2rem; font-size: 0.8rem; }
+      .personal-foot { font-size: 0.82rem; }
+      
+      .debt-clock { padding: 1.25rem 1rem; }
+      .debt-clock-value { font-size: clamp(1.6rem, 10vw, 2.5rem); }
+      .debt-clock-rate { font-size: 0.75rem; flex-wrap: wrap; gap: 0.4rem; }
+      
+      .momentum { padding: 1rem; }
+      .momentum-bar-container { height: 36px; }
+      .momentum-bar-text { font-size: 0.75rem; }
+      
+      .commentary { padding: 1rem 1.25rem; }
+      .commentary-text { font-size: 0.95rem; }
+      
+      .your-visit { padding: 1.25rem 1rem; }
+      .your-visit-title { font-size: 1.2rem; }
+      .your-visit-hero { padding: 1rem 0; }
+      .your-visit-hero-value { font-size: clamp(1.8rem, 10vw, 2.8rem); }
+      .your-visit-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+      .yv-stat { padding: 0.7rem 0.5rem; }
+      .yv-stat-label { font-size: 0.68rem; }
+      .yv-stat-value { font-size: clamp(0.95rem, 4vw, 1.2rem); }
+      
+      .h2h { padding: 1rem 0.85rem; }
+      .h2h-title { font-size: 1.3rem; }
+      .h2h-row { gap: 0.5rem; padding: 0.75rem 0; }
+      .h2h-track { height: 11px; }
+      .h2h-track.infinite { margin-right: -0.85rem; }
+      .h2h-mid { min-width: 68px; }
+      .h2h-stat { font-size: 0.66rem; letter-spacing: 0.03em; }
+      .h2h-note { display: none; }
+      .h2h-winner { font-size: 0.54rem; padding: 0.14rem 0.4rem; }
+      .h2h-val { font-size: 0.82rem; }
+      
+      .what-if { padding: 1.25rem 1rem; }
+      .what-if-title { font-size: 1.2rem; }
+      .what-if-sub { font-size: 0.85rem; }
+      .what-if-price { font-size: clamp(1.5rem, 8vw, 2.2rem); }
+      .what-if-result { font-size: 0.9rem; }
+      
+      .stats-table caption { font-size: 1.3rem; }
+      .stats-table thead th { font-size: 0.72rem; padding: 0.5rem 0; }
+      .stats-table tbody td { padding: 0.75rem 0; font-size: 0.85rem; }
+      
+      .satire { padding: 1.5rem 0; }
+      .satire-headline { font-size: clamp(1.2rem, 5vw, 1.5rem); }
+      .satire-item { font-size: 0.88rem; padding-left: 1rem; }
+      
+      .pbp-title { font-size: 1.3rem; }
+      .pbp-item { gap: 0.75rem; padding: 0.7rem 0; font-size: 0.85rem; }
+      .pbp-time { font-size: 0.72rem; }
+      
+      .footer { font-size: 0.75rem; }
+      
+      .scroll-ticker { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      html { font-size: 14px; }
+      .your-visit-grid { grid-template-columns: 1fr; }
+      .yv-stat { padding: 0.85rem; }
+      .debt-clock-rate span { font-size: 0.7rem; }
+    }
+
+    @media (max-width: 380px) {
+      .top-bar { flex-direction: column; gap: 0.5rem; align-items: stretch; }
+      .top-bar-left, .top-bar-right { justify-content: center; }
+      .matchup-header { padding: 1.5rem 0 1rem; }
+      .scoreboard { padding: 1.5rem 1rem; }
+      .refresh-btn { font-size: 0.7rem; padding: 0.35rem 0.6rem; }
+    }
+
+    /* ACCESSIBILITY: respect reduced-motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+      /* Freeze animated gradient text at a legible, fully-visible position */
+      .debt-clock-value, .priced-value {
+        background-position: 50% 0 !important;
+      }
+      .h2h-title, .personal-title, .your-visit-title, .stats-table caption,
+      .satire-headline, .matchup-name {
+        background-position: 50% 0 !important;
+      }
+      /* Silence the continuous decorative motion entirely */
+      .sparkle-container, #particles { display: none !important; }
+      .momentum-bar-container::after,
+      .debt-clock::before, .debt-clock::after,
+      .priced::after { display: none !important; }
+      .yv-stat:hover { transform: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="spotlight orange"></div>
+  <div class="spotlight red"></div>
+  <div class="sparkle-container" id="sparkleContainer"></div>
+  <canvas id="particles"></canvas>
+
+  <audio id="bgMusic" loop autoplay>
+    <source src="Work Harder.wav" type="audio/wav">
+  </audio>
+
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="live-indicator"><div class="live-dot"></div> Live</div>
+      <span class="top-bar-time" id="clock">--:--:--</span>
+    </div>
+    <div class="top-bar-right">
+      <button class="refresh-btn audio-btn" id="audio-btn" type="button" aria-pressed="false" aria-label="Mute background music" title="Mute background music">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path class="spk" d="M4 9v6h4l5 4V5L8 9H4z"/>
+          <path class="wave" d="M16.5 8.8a4.5 4.5 0 0 1 0 6.4"/>
+          <path class="wave" d="M19.4 6a8.5 8.5 0 0 1 0 12"/>
+          <path class="slash" d="M17 9l5 6M22 9l-5 6"/>
+        </svg>
+      </button>
+      <button class="refresh-btn glint" id="refresh-btn" onclick="init()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="scroll-ticker">
+    <div class="ticker-track" id="ticker-track"></div>
+  </div>
+
+  <div class="page">
+
+    <div class="stale-note" id="stale-note" hidden>⚠ Live feed unavailable. These are the last numbers we saved, and they'll refresh on their own once the data comes back.</div>
+
+    <div class="matchup-header anim-in anim-in-1">
+      <div class="matchup-label">Main Event - Heavyweight Champion</div>
+      <div class="matchup-vs">
+        <span class="matchup-name btc">Bitcoin</span>
+        <span class="matchup-vs-badge">vs</span>
+        <span class="matchup-name debt">US Debt</span>
+      </div>
+      <div class="matchup-tagline" id="tagline">"21 million coins vs. the world's most expensive credit card bill."</div>
+      <div class="matchup-tagline" id="tagline" style="color: var(--red); font-size: small;">"Who will go parabolic first?"</div>
+    </div>
+
+    <div class="scoreboard-wrap anim-in anim-in-2">
+      <div class="scoreboard" id="scoreboard">
+        <div class="score-side btc">
+          <div class="score-team">Bitcoin</div>
+          <div class="score-num" id="score-btc">--</div>
+          <div class="score-detail">Total market cap</div>
+        </div>
+        <div class="score-divider">
+          <div class="score-divider-line"></div>
+          <div class="score-ratio-badge">
+            <div class="score-divider-label" id="score-ratio">--</div>
+            <div class="score-ratio-caption">of the debt</div>
+          </div>
+          <div class="score-divider-line"></div>
+        </div>
+        <div class="score-side debt">
+          <div class="score-team">US Debt</div>
+          <div class="score-num" id="score-debt">--</div>
+          <div class="score-detail">National debt</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="priced-wrap anim-in anim-in-3">
+      <div class="priced">
+        <div class="priced-header">
+          <span class="priced-label">The Debt, Priced in Bitcoin</span>
+          <span class="priced-badge" id="priced-trend">Live</span>
+        </div>
+        <div class="priced-value" id="priced-btc">-- BTC</div>
+        <div class="priced-note" id="priced-note">Working out how many bitcoin it would take to erase the debt...</div>
+        <div class="spark-wrap" id="spark-wrap">
+          <div class="spark-plot" id="spark-plot">
+            <svg class="spark" id="priced-spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <div class="spark-cursor" id="spark-cursor"></div>
+            <div class="spark-dot" id="spark-dot"></div>
+            <div class="spark-tip" id="spark-tip"></div>
+          </div>
+          <div class="spark-axis"><span id="spark-start">4yr ago</span><span id="spark-end">now</span></div>
+          <div class="spark-caption">How much Bitcoin it would take to cover the debt over the past four years, one full halving cycle. It shrinks as BTC climbs. Hover any point for the details.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="debt-clock-wrap anim-in anim-in-3">
+      <div class="debt-clock">
+        <div class="debt-clock-header">
+          <span class="debt-clock-label">National Debt Right Now</span>
+          <span class="debt-clock-live">Live</span>
+        </div>
+        <div class="debt-clock-value" id="debt-live">$--</div>
+        <div class="debt-clock-rate">
+          <span>+$136,574/sec</span>
+          <span class="debt-clock-sep">·</span>
+          <span>+$8.2M/min</span>
+          <span class="debt-clock-sep">·</span>
+          <span>+$11.8B/day</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="momentum anim-in anim-in-4" id="momentum-section">
+      <div class="momentum-header">
+        <span class="momentum-title">24h Momentum</span>
+        <span class="momentum-badge neutral" id="momentum-badge">Loading</span>
+      </div>
+      <div class="momentum-bar-border">
+        <div class="momentum-bar-container">
+          <div class="momentum-bar-left" id="momentum-fill" style="width:50%">
+            <span class="momentum-bar-text" id="momentum-btc-text">BTC</span>
+          </div>
+          <div class="momentum-bar-right">
+            <span class="momentum-bar-text" id="momentum-debt-text">DEBT</span>
+          </div>
+        </div>
+      </div>
+      <div class="momentum-labels">
+        <span>Bitcoin gaining</span>
+        <span>Debt gaining</span>
+      </div>
+    </div>
+
+    <div class="personal anim-in anim-in-5">
+      <div class="personal-title">Make It Personal</div>
+      <div class="personal-grid">
+        <div class="personal-side btc">
+          <div class="personal-side-label">1 Bitcoin costs</div>
+          <div class="personal-side-value" id="pers-btc">$--</div>
+          <div class="personal-side-sub">What one coin runs today</div>
+        </div>
+        <div class="personal-vs">vs</div>
+        <div class="personal-side debt">
+          <div class="personal-side-label">Your slice of the debt</div>
+          <div class="personal-side-value" id="pers-debt">$--</div>
+          <div class="personal-side-sub">Every American's cut</div>
+        </div>
+      </div>
+      <div class="personal-foot">Your personal slice of the debt comes to <strong id="pers-share-btc">--</strong> BTC. Every American would need to buy that much bitcoin just to break even with what Washington already borrowed in their name.</div>
+    </div>
+
+    <div class="commentary-wrap anim-in anim-in-5">
+      <div class="commentary">
+        <div class="commentary-label">Booth Commentary</div>
+        <div class="commentary-text" id="commentary-text">Waiting for the data feed...</div>
+      </div>
+    </div>
+
+    <div class="your-visit-wrap">
+      <div class="your-visit">
+        <div class="your-visit-header">
+          <span class="your-visit-title">Since You Opened This Page...</span>
+          <span class="your-visit-timer" id="visit-timer">0:00</span>
+        </div>
+        <div class="your-visit-hero">
+          <div class="your-visit-hero-label">The US has borrowed</div>
+          <div class="your-visit-hero-value" id="since-debt">$0</div>
+          <div class="your-visit-hero-note" id="since-debt-note">That works out to about $136,574 every single second, and it never stops.</div>
+        </div>
+        <div class="your-visit-grid">
+          <div class="yv-stat orange">
+            <div class="yv-stat-label">Your share grew by</div>
+            <div class="yv-stat-value" id="since-personal">$0</div>
+          </div>
+          <div class="yv-stat red">
+            <div class="yv-stat-label">$ per heartbeat</div>
+            <div class="yv-stat-value" id="since-heartbeat">$0</div>
+          </div>
+          <div class="yv-stat text">
+            <div class="yv-stat-label">Big Macs it could buy</div>
+            <div class="yv-stat-value" id="since-bigmacs">0</div>
+          </div>
+          <div class="yv-stat orange">
+            <div class="yv-stat-label">iPhones it could buy</div>
+            <div class="yv-stat-value" id="since-iphones">0</div>
+          </div>
+          <div class="yv-stat red">
+            <div class="yv-stat-label">Median salaries</div>
+            <div class="yv-stat-value" id="since-salaries">0</div>
+          </div>
+          <div class="yv-stat orange">
+            <div class="yv-stat-label">Homes worth of debt</div>
+            <div class="yv-stat-value" id="since-homes">0</div>
+          </div>
+          <div class="yv-stat text">
+            <div class="yv-stat-label">Teslas that could buy</div>
+            <div class="yv-stat-value" id="since-teslas">0</div>
+          </div>
+          <div class="yv-stat orange">
+            <div class="yv-stat-label">Full college tuitions</div>
+            <div class="yv-stat-value" id="since-tuitions">0</div>
+          </div>
+          <div class="yv-stat red">
+            <div class="yv-stat-label">Interest accrued</div>
+            <div class="yv-stat-value" id="since-interest">$0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="h2h">
+      <div class="h2h-title">Head-to-Head</div>
+      <div class="h2h-sub">The weigh-in, category by category</div>
+      <div id="h2h-rows"></div>
+    </div>
+
+    <div class="what-if">
+      <div class="what-if-title">What If?</div>
+      <div class="what-if-sub">Drag the slider to simulate different Bitcoin prices.</div>
+      <div class="what-if-display">
+        <div class="what-if-price" id="wif-price">$100,000</div>
+        <div class="what-if-result" id="wif-result">...</div>
+      </div>
+      <input type="range" class="what-if-slider" id="wif-slider" min="1000" max="5000000" value="100000" step="1000">
+      <div class="what-if-labels">
+        <span>$1,000</span>
+        <span>$5,000,000</span>
+      </div>
+    </div>
+
+    <table class="stats-table">
+      <caption>Tale of the Tape</caption>
+      <thead><tr><th>Stat</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>BTC price per coin</td><td class="val-orange" id="t-price">--</td></tr>
+        <tr><td>BTC 24h change</td><td id="t-24h">--</td></tr>
+        <tr><td>BTC all-time high</td><td class="val-orange" id="t-ath">--</td></tr>
+        <tr><td>BTC distance from ATH</td><td id="t-ath-dist">--</td></tr>
+        <tr><td>BTC 24h volume</td><td class="val-orange" id="t-vol">--</td></tr>
+        <tr><td>BTC circulating supply</td><td class="val-orange" id="t-supply">--</td></tr>
+        <tr><td>Price needed to match debt</td><td class="val-orange" id="t-target">--</td></tr>
+        <tr><td>Growth multiple required</td><td class="val-white" id="t-mult">--</td></tr>
+        <tr><td>Debt per American</td><td class="val-red" id="t-share">--</td></tr>
+        <tr><td>Debt per taxpayer</td><td class="val-red" id="t-taxpayer">--</td></tr>
+        <tr><td>Daily interest cost</td><td class="val-red">~$2.9B</td></tr>
+        <tr><td>Monthly interest cost</td><td class="val-red">~$89B</td></tr>
+        <tr><td>Debt-to-GDP ratio</td><td class="val-red">~124%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="satire">
+      <div class="satire-headline">Things that are going great</div>
+      <div class="satire-items" id="satire-items"></div>
+    </div>
+
+    <div class="play-by-play">
+      <div class="pbp-title">Play-by-Play</div>
+      <div class="pbp-feed" id="pbp-feed">
+        <div class="pbp-item"><div class="pbp-time">--:--</div><div class="pbp-text">Waiting for data...</div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Data: <a href="https://www.coingecko.com" target="_blank">CoinGecko</a> (Bitcoin stats) · <a href="https://fiscaldata.treasury.gov" target="_blank">US Treasury</a> (US Debt stats)<br>
+      Auto-refreshes every 60 seconds, with the debt ticking at its average daily rate. None of this is financial advice.<br>
+      Built with equal parts dread and humor.<br>
+      <span id="foot-updated">--</span>
+    </div>
+
+  </div>
+
+  <script>
+    const PRICE_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin&order=market_cap_desc&sparkline=false';
+    const DEBT_API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=1&fields=record_date,tot_pub_debt_out_amt';
+    // Kraken weekly OHLC: free, keyless, CORS-enabled, ~13yr of history in one call.
+    const KRAKEN_OHLC_API = 'https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=10080';
+    // CoinGecko fallback (its public API caps historical data at 365 days).
+    const BTC_HISTORY_API = days => `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`;
+    const HISTORY_YEARS = 4;   // ~one Bitcoin halving cycle
+    const DEBT_HISTORY_API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=3000&fields=record_date,tot_pub_debt_out_amt';
+
+    const BTC_SUPPLY = 21_000_000;
+    const US_POP = 335_000_000;
+    const US_TAXPAYERS = 150_000_000;
+    const DEBT_PER_SEC = 136_574;
+    const MEDIAN_HOME = 417_000;
+    const ORANGE = '#f7931a';
+
+    const REDUCE_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // localStorage cache so a rate-limited CoinGecko or a down Treasury API still
+    // shows the last good numbers instead of dashes.
+    const CACHE = { btc: 'bvd_btc_v1', debt: 'bvd_debt_v1', hist: 'bvd_hist_v6' };
+    const HIST_MAX_AGE = 6 * 3600 * 1000; // refetch the 1yr history at most every 6h
+
+    function saveCache(key, data) {
+      try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), data })); } catch {}
+    }
+    function loadCache(key, maxAgeMs) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const obj = JSON.parse(raw);
+        const age = Date.now() - obj.t;
+        return { data: obj.data, stale: maxAgeMs ? age > maxAgeMs : false, age };
+      } catch { return null; }
+    }
+
+    let histSeries = null;
+
+    const openedAt = Date.now();
+    let lastBtc = null;
+    let debtAnchorAmount = 0, debtAnchorTime = 0;
+
+    const $ = id => document.getElementById(id);
+
+    // Treasury reports tot_pub_debt_out_amt as of close of business on record_date, and
+    // publishes it one to three business days later. Anchor to the end of record_date so
+    // the clock covers the reporting lag instead of restarting from a stale figure.
+    function anchorTimeFor(recordDate) {
+      const [y, m, d] = recordDate.split('-').map(Number);
+      return Date.UTC(y, m - 1, d) + 86_400_000;
+    }
+
+    function liveDebt() {
+      if (!debtAnchorAmount) return 0;
+      const elapsed = Math.max(0, (Date.now() - debtAnchorTime) / 1000);
+      return debtAnchorAmount + elapsed * DEBT_PER_SEC;
+    }
+
+    function commas(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+    function short(n) {
+      if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+      if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+      return commas(n);
+    }
+
+    // Particle system for celebrations
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let sparks = [];
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function spawnSparks(x, y, color, count = 30) {
+      if (REDUCE_MOTION) return;
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        sparks.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 3,
+          life: 1,
+          decay: Math.random() * 0.02 + 0.015,
+          color,
+          size: Math.random() * 3 + 1,
+        });
+      }
+    }
+
+    function drawSparks() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      sparks = sparks.filter(s => s.life > 0);
+      for (const s of sparks) {
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.15;
+        s.life -= s.decay;
+        ctx.globalAlpha = s.life;
+        ctx.fillStyle = s.color;
+        ctx.fillRect(s.x, s.y, s.size, s.size);
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(drawSparks);
+    }
+    drawSparks();
+
+    // APIs
+    async function fetchBTC() {
+      try { const r = await fetch(PRICE_API); const d = await r.json(); return d[0]; }
+      catch { return null; }
+    }
+
+    async function fetchDebt() {
+      try {
+        const r = await fetch(DEBT_API, { signal: AbortSignal.timeout(10000) });
+        const d = await r.json(); const rec = d.data[0];
+        return { amount: parseFloat(rec.tot_pub_debt_out_amt), date: rec.record_date };
+      } catch { return null; }
+    }
+
+    // Fetch BTC price history as ascending [ms, price] pairs.
+    // Primary: Kraken weekly candles (multi-year). Fallback: CoinGecko daily (1yr cap).
+    async function fetchBtcPrices() {
+      try {
+        const j = await fetch(KRAKEN_OHLC_API, { signal: AbortSignal.timeout(12000) }).then(r => r.json());
+        const key = j && j.result && Object.keys(j.result).find(k => k !== 'last');
+        const arr = key && j.result[key];
+        if (Array.isArray(arr) && arr.length > 1) {
+          const pts = arr.map(c => [c[0] * 1000, parseFloat(c[4])]).filter(p => p[1] > 0);   // [time*1000, close]
+          if (pts.length > 1) return pts;
+        }
+      } catch {}
+      try {
+        const d = await fetch(BTC_HISTORY_API(365), { signal: AbortSignal.timeout(12000) }).then(r => r.json());
+        if (Array.isArray(d.prices) && d.prices.length > 1) return d.prices;
+      } catch {}
+      return null;
+    }
+
+    // Build a multi-year "debt priced in BTC" series from historical BTC prices
+    // (CoinGecko) aligned against historical debt figures (Treasury).
+    async function fetchHistory() {
+      try {
+        const [allPrices, debtHist] = await Promise.all([
+          fetchBtcPrices(),
+          fetch(DEBT_HISTORY_API, { signal: AbortSignal.timeout(12000) }).then(r => r.json()),
+        ]);
+
+        const records = debtHist && debtHist.data;              // descending by record_date
+        if (!Array.isArray(allPrices) || allPrices.length < 2 || !Array.isArray(records) || !records.length) return null;
+
+        // Clip to the last N years (keep everything if that leaves too few points).
+        const cutoff = Date.now() - HISTORY_YEARS * 365.25 * 86400 * 1000;
+        const clipped = allPrices.filter(p => p[0] >= cutoff);
+        const prices = clipped.length > 2 ? clipped : allPrices;
+
+        const debtAsc = records
+          .map(r => ({ ms: Date.parse(r.record_date), amt: parseFloat(r.tot_pub_debt_out_amt) }))
+          .filter(r => Number.isFinite(r.ms) && Number.isFinite(r.amt))
+          .sort((a, b) => a.ms - b.ms);
+        if (!debtAsc.length) return null;
+
+        const debtAt = ms => {
+          let val = debtAsc[0].amt;
+          for (const r of debtAsc) { if (r.ms <= ms) val = r.amt; else break; }
+          return val;
+        };
+
+        const points = [];
+        const push = (ms, price) => {
+          if (!(price > 0)) return;
+          points.push({ ms, price, debtInBtc: debtAt(ms) / price });
+        };
+        // Aim for ~140 plotted points regardless of the source cadence (daily or weekly).
+        const step = Math.max(1, Math.round(prices.length / 140));
+        for (let i = 0; i < prices.length; i += step) push(prices[i][0], prices[i][1]);
+        const last = prices[prices.length - 1];
+        if (!points.length || points[points.length - 1].ms !== last[0]) push(last[0], last[1]);
+
+        return points.length > 1 ? { points } : null;
+      } catch { return null; }
+    }
+
+    function fmtDate(ms) {
+      return new Date(ms).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    let sparkGeom = null;   // { points, coords, H } for hover lookups
+
+    function renderSpark(points) {
+      const svg = $('priced-spark');
+      const wrap = $('spark-wrap');
+      if (!svg || !points || points.length < 2) { if (wrap) wrap.style.display = 'none'; sparkGeom = null; return; }
+      if (wrap) wrap.style.display = '';
+
+      const vals = points.map(p => p.debtInBtc);
+      const min = Math.min(...vals), max = Math.max(...vals);
+      const range = (max - min) || 1;
+      const W = 100, H = 36, padY = 3;
+      const coords = points.map((p, i) => {
+        const x = (i / (points.length - 1)) * W;
+        const y = padY + (1 - (p.debtInBtc - min) / range) * (H - padY * 2);
+        return [x, y];
+      });
+      sparkGeom = { points, coords, H };
+      const line = coords.map(c => c[0].toFixed(2) + ',' + c[1].toFixed(2)).join(' ');
+      const area = `0,${H} ` + line + ` ${W},${H}`;
+      const end = coords[coords.length - 1];
+      svg.innerHTML =
+        `<defs><linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="0%" stop-color="${ORANGE}" stop-opacity="0.35"/>` +
+        `<stop offset="100%" stop-color="${ORANGE}" stop-opacity="0"/></linearGradient></defs>` +
+        `<polygon points="${area}" fill="url(#sparkFill)"/>` +
+        `<polyline points="${line}" fill="none" stroke="${ORANGE}" stroke-width="1.5" ` +
+        `vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>` +
+        `<circle cx="${end[0].toFixed(2)}" cy="${end[1].toFixed(2)}" r="2" fill="${ORANGE}"/>`;
+      $('spark-start').textContent = fmtDate(points[0].ms);
+      $('spark-end').textContent = 'now';
+    }
+
+    // "The debt, priced in Bitcoin": how many BTC it would take to erase the debt,
+    // plus the 1-year trend from the historical series.
+    function renderPricedInBtc(btc) {
+      if (!btc) return;
+      const btcToClear = liveDebt() / btc.current_price;   // number of BTC
+      const inMillions = btcToClear / 1e6;
+      const capMult = btcToClear / BTC_SUPPLY;
+
+      $('priced-btc').textContent = inMillions.toFixed(1) + 'M BTC';
+      $('priced-note').innerHTML =
+        `Erasing the debt would take <strong>${inMillions.toFixed(0)} million bitcoin</strong>, ` +
+        `and only <strong>21 million</strong> will ever exist. That makes the debt bigger than ` +
+        `<strong>every coin that can exist by ${capMult.toFixed(1)}×</strong>.`;
+
+      const badge = $('priced-trend');
+      if (histSeries && histSeries.points && histSeries.points.length > 1) {
+        const pts = histSeries.points;
+        const first = pts[0].debtInBtc;
+        const change = ((btcToClear - first) / first) * 100;   // negative = fewer BTC needed now
+        const years = Math.max(1, Math.round((Date.now() - pts[0].ms) / (365.25 * 86400 * 1000)));
+        const span = `${years}yr`;
+        if (change < 0) { badge.textContent = `▼ ${Math.abs(change).toFixed(0)}% in ${span}`; badge.className = 'priced-badge down'; }
+        else { badge.textContent = `▲ ${change.toFixed(0)}% in ${span}`; badge.className = 'priced-badge'; }
+        renderSpark(pts);
+      } else {
+        badge.textContent = 'Live'; badge.className = 'priced-badge';
+      }
+    }
+
+    // "Make it personal": per-person debt vs. the price of one Bitcoin.
+    function renderPersonal(btc) {
+      if (!btc) return;
+      const price = btc.current_price;
+      const perPerson = liveDebt() / US_POP;
+      $('pers-btc').textContent = commas(price);
+      $('pers-debt').textContent = commas(perPerson);
+      $('pers-share-btc').textContent = (perPerson / price).toFixed(3);
+    }
+
+    async function loadHistory(btc) {
+      const cached = loadCache(CACHE.hist, HIST_MAX_AGE);
+      if (cached && !cached.stale) { histSeries = cached.data; renderPricedInBtc(btc); return; }
+
+      const fresh = await fetchHistory();
+      if (fresh) { histSeries = fresh; saveCache(CACHE.hist, fresh); }
+      else if (cached) { histSeries = cached.data; }           // fall back to stale-but-usable history
+      renderPricedInBtc(btc);
+    }
+
+    // Sparkline hover: snap to the nearest data point and show its value + date.
+    function moveSparkCursor(clientX) {
+      if (!sparkGeom) return;
+      const plot = $('spark-plot');
+      const rect = plot.getBoundingClientRect();
+      if (!rect.width) return;
+
+      let frac = (clientX - rect.left) / rect.width;
+      frac = Math.max(0, Math.min(1, frac));
+      const n = sparkGeom.coords.length;
+      const idx = Math.round(frac * (n - 1));
+      const [cx, cy] = sparkGeom.coords[idx];
+      const p = sparkGeom.points[idx];
+
+      const leftPct = cx;                          // viewBox x (0 to 100) maps directly to width %
+      const topPx = (cy / sparkGeom.H) * rect.height;
+
+      $('spark-cursor').style.left = leftPct + '%';
+      $('spark-dot').style.left = leftPct + '%';
+      $('spark-dot').style.top = topPx + 'px';
+
+      const tip = $('spark-tip');
+      tip.innerHTML = `<strong>${(p.debtInBtc / 1e6).toFixed(1)}M BTC</strong>` +
+                      `<span class="tip-date">${fmtDate(p.ms)}</span>`;
+      tip.style.left = leftPct + '%';
+      tip.style.top = topPx + 'px';
+      // Keep the tooltip inside the panel: nudge horizontally near the edges,
+      // and drop it below the point when the point sits high on the chart.
+      let tx = '-50%';
+      if (leftPct < 16) tx = '-8%'; else if (leftPct > 84) tx = '-92%';
+      const ty = topPx < rect.height * 0.45 ? 'calc(12px)' : 'calc(-100% - 10px)';
+      tip.style.transform = `translate(${tx}, ${ty})`;
+
+      $('spark-cursor').style.opacity = 1;
+      $('spark-dot').style.opacity = 1;
+      tip.style.opacity = 1;
+    }
+
+    function hideSparkCursor() {
+      ['spark-cursor', 'spark-dot', 'spark-tip'].forEach(id => { const el = $(id); if (el) el.style.opacity = 0; });
+    }
+
+    function initSparkHover() {
+      const plot = $('spark-plot');
+      if (!plot) return;
+      plot.addEventListener('mousemove', e => moveSparkCursor(e.clientX));
+      plot.addEventListener('mouseleave', hideSparkCursor);
+      plot.addEventListener('touchstart', e => { if (e.touches[0]) moveSparkCursor(e.touches[0].clientX); }, { passive: true });
+      plot.addEventListener('touchmove', e => { if (e.touches[0]) moveSparkCursor(e.touches[0].clientX); }, { passive: true });
+      plot.addEventListener('touchend', hideSparkCursor);
+    }
+
+    // Ticker
+    function buildTicker(btc) {
+      const items = [
+        `BTC <span class="val">${commas(btc.current_price)}</span>`,
+        `24h <span class="${btc.price_change_percentage_24h >= 0 ? 'up' : 'down'}">${btc.price_change_percentage_24h >= 0 ? '+' : ''}${btc.price_change_percentage_24h.toFixed(2)}%</span>`,
+        `MCap <span class="val">${short(btc.market_cap)}</span>`,
+        `Vol <span class="val">${short(btc.total_volume)}</span>`,
+        `ATH <span class="val">${commas(btc.ath)}</span>`,
+        `From ATH <span class="down">${btc.ath_change_percentage.toFixed(1)}%</span>`,
+        `Supply <span class="val">${(btc.circulating_supply / 1e6).toFixed(2)}M / 21M</span>`,
+        `Debt/sec <span class="down">+$136,574</span>`,
+        `Debt/min <span class="down">+$8.2M</span>`,
+      ];
+      const html = items.map(i => `<div class="ticker-item">${i}</div>`).join('');
+      $('ticker-track').innerHTML = html + html;
+    }
+
+    // Head to head weigh-in. Each bar shows that side's magnitude, so the bigger
+    // number gets the bigger bar. The winner chip flags who actually comes out ahead.
+    function buildH2H(btc, debt) {
+      const cap = btc.market_cap;
+      const debtAmt = debt.amount;
+
+      // Daily dollar change: BTC market-cap move vs the debt's daily add, both in $.
+      const btcDaily = cap * (btc.price_change_percentage_24h / 100);
+      const debtDaily = DEBT_PER_SEC * 86400;
+      const dailyMax = Math.max(Math.abs(btcDaily), debtDaily) || 1;
+
+      const rows = [
+        {
+          stat: 'Market Cap', note: `debt leads ${(debtAmt / cap).toFixed(0)}×`, winner: 'debt',
+          btc: { val: short(cap), pct: (cap / debtAmt) * 100 },
+          debt: { val: short(debtAmt), pct: 100 },
+        },
+        {
+          stat: 'Added Today', note: 'in real dollars',
+          winner: Math.abs(btcDaily) >= debtDaily ? 'btc' : 'debt',
+          btc: { val: (btcDaily >= 0 ? '+' : '-') + short(Math.abs(btcDaily)), pct: Math.abs(btcDaily) / dailyMax * 100, down: btcDaily < 0 },
+          debt: { val: '+' + short(debtDaily), pct: debtDaily / dailyMax * 100 },
+        },
+        {
+          stat: 'Supply Cap', note: 'capped vs endless', winner: 'btc',
+          btc: { val: '21M', pct: 9 },
+          debt: { val: '∞', pct: 100, infinite: true },
+        },
+        {
+          stat: 'Age', note: 'debt since 1790', winner: 'debt',
+          btc: { val: '17 yrs', pct: (17 / 236) * 100 },
+          debt: { val: '236 yrs', pct: 100 },
+        },
+        {
+          stat: 'Central Control', note: 'who sets the rules', winner: 'btc',
+          btc: { val: 'Nobody', pct: 5 },
+          debt: { val: 'Congress', pct: 100 },
+        },
+      ];
+
+      const bar = (s, cls, dir) => {
+        if (s.infinite) {
+          return `<div class="h2h-track infinite"><div class="h2h-bar ${cls}" style="width:100%"></div></div>`;
+        }
+        return `<div class="h2h-track ${dir}"><div class="h2h-bar ${cls}${s.down ? ' down' : ''}" style="width:${Math.min(s.pct, 100)}%"></div></div>`;
+      };
+
+      $('h2h-rows').innerHTML = rows.map(r => `
+        <div class="h2h-row">
+          <div class="h2h-side btc ${r.winner === 'btc' ? 'win' : ''}">
+            ${bar(r.btc, 'orange', 'left')}
+            <span class="h2h-val orange">${r.btc.val}</span>
+          </div>
+          <div class="h2h-mid">
+            <div class="h2h-stat">${r.stat}</div>
+            <div class="h2h-note">${r.note}</div>
+            <div class="h2h-winner ${r.winner}">${r.winner === 'btc' ? 'Bitcoin' : r.winner === 'debt' ? 'Debt' : 'Even'}</div>
+          </div>
+          <div class="h2h-side debt ${r.winner === 'debt' ? 'win' : ''}">
+            ${bar(r.debt, 'red', 'right')}
+            <span class="h2h-val red">${r.debt.val}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Momentum meter
+    function buildMomentum(btc) {
+      const change = btc.price_change_percentage_24h;
+      // BTC gaining = bar goes left (more orange), Debt always gains
+      // Normalize: BTC +5% = very hot, 0% = neutral, -5% = debt dominating
+      const normalized = Math.max(0, Math.min(100, 50 + change * 8));
+
+      $('momentum-fill').style.width = normalized + '%';
+      $('momentum-btc-text').textContent = `BTC ${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+      $('momentum-debt-text').textContent = '+$11.8B/day';
+
+      const badge = $('momentum-badge');
+      if (change > 3) { badge.textContent = 'BTC Hot'; badge.className = 'momentum-badge hot'; }
+      else if (change > 0) { badge.textContent = 'BTC Warm'; badge.className = 'momentum-badge hot'; }
+      else if (change > -3) { badge.textContent = 'Neutral'; badge.className = 'momentum-badge neutral'; }
+      else { badge.textContent = 'BTC Cold'; badge.className = 'momentum-badge cold'; }
+    }
+
+    // What-if slider
+    function updateWhatIf() {
+      const price = parseInt($('wif-slider').value, 10);
+      const hypotheticalCap = price * BTC_SUPPLY;
+      const debtNow = liveDebt();
+      const pct = debtNow > 0 ? (hypotheticalCap / debtNow) * 100 : 0;
+
+      $('wif-price').textContent = commas(price) + ' per BTC';
+
+      if (pct >= 100) {
+        $('wif-result').innerHTML = `At this price Bitcoin <strong>matches the debt</strong>, with a market cap of <strong>${short(hypotheticalCap)}</strong>. Game over.`;
+      } else {
+        $('wif-result').innerHTML = `Market cap would be <strong>${short(hypotheticalCap)}</strong>, which works out to <strong>${pct.toFixed(1)}%</strong> of the debt. Still ${(debtNow / hypotheticalCap).toFixed(1)}x short.`;
+      }
+    }
+
+    $('wif-slider').addEventListener('input', updateWhatIf);
+
+    // Play by play
+    function buildPBP(btc, debt) {
+      const pct = (btc.market_cap / debt.amount) * 100;
+      const mult = debt.amount / btc.market_cap;
+      const now = new Date();
+      const fmt = t => t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const debtSinceMidnight = DEBT_PER_SEC * (now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds());
+
+      const plays = [
+        { time: fmt(now), text: `Fresh data in. BTC at <span class="orange">${commas(btc.current_price)}</span> against a debt of <span class="red">${short(debt.amount)}</span>, and the scoreboard updates.` },
+        { time: fmt(now), text: `Bitcoin sits at <span class="hl">${pct.toFixed(2)}%</span> of the debt, outweighed ${mult.toFixed(0)}x. It's the underdog here, though this particular Goliath owns a money printer.` },
+        { time: fmt(new Date(now - 1800000)), text: `Since midnight the US quietly added <span class="red">${short(debtSinceMidnight)}</span> to the tab, roughly ${Math.round(debtSinceMidnight / MEDIAN_HOME).toLocaleString()} homes worth of debt, most of it while you were asleep.` },
+        { time: 'Daily', text: `Interest payments run about <span class="red">$2.9 billion per day</span>, close to $2M a minute flowing from taxpayers straight to bondholders, and the meter never stops.` },
+        { time: 'Record', text: `BTC all-time high sits at <span class="orange">${commas(btc.ath)}</span>, and it's currently <span class="${btc.ath_change_percentage >= 0 ? 'orange' : 'red'}">${btc.ath_change_percentage.toFixed(1)}%</span> away. ${btc.ath_change_percentage > -5 ? 'Knocking on the door.' : 'Still a ways to climb.'}` },
+      ];
+
+      if (btc.price_change_percentage_24h > 5) {
+        plays.push({ time: '24h', text: `Bitcoin is ripping <span class="orange">+${btc.price_change_percentage_24h.toFixed(1)}%</span> today and the crowd is loving it, though the debt doesn't flinch.` });
+      } else if (btc.price_change_percentage_24h > 2) {
+        plays.push({ time: '24h', text: `Solid day for Bitcoin, up <span class="orange">+${btc.price_change_percentage_24h.toFixed(1)}%</span>. These are small moves in a long game.` });
+      } else if (btc.price_change_percentage_24h < -5) {
+        plays.push({ time: '24h', text: `Rough day for Bitcoin, down <span class="red">${btc.price_change_percentage_24h.toFixed(1)}%</span>. The debt added another $11.8 billion, because it doesn't have down days.` });
+      } else if (btc.price_change_percentage_24h < -2) {
+        plays.push({ time: '24h', text: `Bitcoin is sliding <span class="red">${btc.price_change_percentage_24h.toFixed(1)}%</span>, a bad day at the office, while Treasury keeps the printer humming.` });
+      }
+
+      plays.push({ time: 'Fun', text: `Volume today came to <span class="hl">${short(btc.total_volume)}</span>. That's how much Bitcoin changed hands in 24 hours, more than the GDP of most countries.` });
+
+      $('pbp-feed').innerHTML = plays.map(p => `
+        <div class="pbp-item"><div class="pbp-time">${p.time}</div><div class="pbp-text">${p.text}</div></div>
+      `).join('');
+    }
+
+    // Satire
+    function buildSatire(btc, debt) {
+      const debtAmt = debt.amount;
+      const hourNow = new Date().getHours() + new Date().getMinutes() / 60;
+      const debtToday = DEBT_PER_SEC * hourNow * 3600;
+      const perBaby = Math.round(debtAmt / US_POP / 1000);
+      const interestPerMin = 2_000_000;
+
+      const items = [
+        `<strong>The US now spends more on interest than on defense.</strong> The world's largest military budget just got body-checked by a spreadsheet, and nobody's quite sure who to bomb about it.`,
+        `<strong>Every American newborn owes $${perBaby}k before their first breath.</strong> There's no consent form and no way to opt out, just a birth certificate that doubles as an invoice. Welcome to Earth, kid. The national credit card is maxed and your name is on it.`,
+        `<strong>Today alone, the debt grew by ${short(debtToday)}.</strong> That happened while people argued on Twitter about whether a $5 coffee is a waste of money. The government spent ${Math.round(debtToday / MEDIAN_HOME).toLocaleString()} homes' worth before lunch and nobody blinked.`,
+        `<strong>Bitcoin's hard cap is 21 million, fixed forever.</strong> No act of Congress can change it, and there's no emergency-powers loophole or Fed press conference about "necessary adjustments" that touches it. The supply is simply the supply.`,
+        `<strong>At current rates, interest costs $${(interestPerMin).toLocaleString()} a minute.</strong> In the time it took to read this sentence, taxpayers racked up roughly $${(interestPerMin / 4).toLocaleString()} more, and that's just the interest, not a cent of the principal.`,
+      ];
+
+      $('satire-items').innerHTML = items.map(t => `<div class="satire-item">${t}</div>`).join('');
+    }
+
+    // Main render
+    function render(btc, debt) {
+      const prevBtc = lastBtc;
+      lastBtc = btc;
+
+      debtAnchorAmount = debt.amount;
+      debtAnchorTime = anchorTimeFor(debt.date);
+
+      const cap = btc.market_cap;
+      const price = btc.current_price;
+      const debtAmt = liveDebt();
+      const debtNow = { amount: debtAmt, date: debt.date };
+      const pct = (cap / debtAmt) * 100;
+      const mult = debtAmt / cap;
+      const target = debtAmt / BTC_SUPPLY;
+
+      // Flash + particles on BTC gain
+      if (prevBtc && btc.current_price > prevBtc.current_price) {
+        $('scoreboard').classList.add('flash');
+        setTimeout(() => $('scoreboard').classList.remove('flash'), 600);
+        const rect = $('score-btc').getBoundingClientRect();
+        spawnSparks(rect.left + rect.width / 2, rect.top + rect.height / 2, '#f7931a', 25);
+      }
+
+      // Scoreboard
+      $('score-btc').textContent = short(cap);
+      $('score-debt').textContent = short(debtAmt);
+      $('score-ratio').textContent = pct.toFixed(2) + '%';
+      $('score-btc').classList.add('pop');
+      $('score-debt').classList.add('pop');
+      setTimeout(() => { $('score-btc').classList.remove('pop'); $('score-debt').classList.remove('pop'); }, 400);
+
+      // Commentary
+      if (pct >= 100) {
+        $('commentary-text').innerHTML = `<strong>Ladies and gentlemen, we have a new champion.</strong> Bitcoin's market cap has officially overtaken the US National Debt. Twenty-one million coins, conjured by a pseudonymous programmer in 2009, now outweigh every dollar ever borrowed by the most powerful government in history. So much for the money printer.`;
+      } else if (pct > 10) {
+        $('commentary-text').innerHTML = `Bitcoin is <span class="orange">${pct.toFixed(2)}%</span> of the way there, into double digits and still climbing. The debt still towers at <strong>${mult.toFixed(1)}x</strong> Bitcoin's total value, but the gap is narrowing. Each coin needs to reach <span class="orange">${commas(target)}</span> to force a tie, and the crowd is getting restless.`;
+      } else if (pct > 3) {
+        $('commentary-text').innerHTML = `Bitcoin is <span class="orange">${pct.toFixed(2)}%</span> the size of the debt. For every dollar in Bitcoin, the US owes <span class="red">$${mult.toFixed(0)}</span>, and each coin needs to hit <span class="orange">${commas(target)}</span> to even the score. The debt never trains or rests, it just prints, and all Bitcoin has going for it is a fixed supply and time.`;
+      } else {
+        $('commentary-text').innerHTML = `The debt is dominant and it isn't close, running <span class="red">${mult.toFixed(0)}x</span> larger than all Bitcoin combined. Right now it looks like a house cat staring down a freight train. The cat has conviction, at least, and the train is slowly running out of track.`;
+      }
+
+      // Stats
+      $('t-price').textContent = commas(price);
+      $('t-target').textContent = commas(target);
+      $('t-mult').textContent = mult.toFixed(1) + 'x';
+      $('t-share').textContent = commas(debtAmt / US_POP);
+      $('t-taxpayer').textContent = commas(debtAmt / US_TAXPAYERS);
+      $('t-ath').textContent = commas(btc.ath);
+      $('t-vol').textContent = short(btc.total_volume);
+      $('t-supply').textContent = (btc.circulating_supply / 1e6).toFixed(2) + 'M / 21M';
+
+      const athDist = btc.ath_change_percentage;
+      $('t-ath-dist').textContent = athDist.toFixed(1) + '%';
+      $('t-ath-dist').className = athDist >= -1 ? 'val-green' : 'val-red';
+
+      const c24 = btc.price_change_percentage_24h;
+      $('t-24h').textContent = (c24 >= 0 ? '+' : '') + c24.toFixed(2) + '%';
+      $('t-24h').className = c24 >= 0 ? 'val-green' : 'val-red';
+
+      // Sections
+      buildMomentum(btc);
+      renderPricedInBtc(btc);
+      renderPersonal(btc);
+      buildH2H(btc, debtNow);
+      buildPBP(btc, debtNow);
+      buildSatire(btc, debtNow);
+      buildTicker(btc);
+      updateWhatIf();
+
+      $('foot-updated').textContent = `Last fetched: ${new Date().toLocaleTimeString()} · Debt extrapolated from Treasury close of ${debt.date}`;
+    }
+
+    // Tick (runs every 100ms)
+    const TESLA_PRICE = 44_000;
+    const TUITION_COST = 26_000;
+    const INTEREST_RATE_ANNUAL = 0.032; // ~3.2% weighted avg interest rate
+    const HEARTBEATS_PER_SEC = 1.2; // avg resting
+    const BIG_MAC_PRICE = 5.69;
+    const IPHONE_PRICE = 999;
+    const MEDIAN_SALARY = 59_000; // US median personal income
+
+    function tick() {
+      $('clock').textContent = new Date().toLocaleTimeString();
+
+      // Live debt clock
+      if (debtAnchorAmount) {
+        $('debt-live').textContent = '$' + Math.round(liveDebt()).toLocaleString('en-US');
+      }
+
+      // Since you arrived
+      const sec = (Date.now() - openedAt) / 1000;
+      const added = sec * DEBT_PER_SEC;
+      const interestPerSec = (debtAnchorAmount || 36e12) * INTEREST_RATE_ANNUAL / (365.25 * 86400);
+      const interestAccrued = sec * interestPerSec;
+      const personalGrowth = added / US_POP;
+      const heartbeats = sec * HEARTBEATS_PER_SEC;
+      const perHeartbeat = added / heartbeats;
+
+      $('since-debt').textContent = '+' + commas(added);
+      $('since-homes').textContent = Math.floor(added / MEDIAN_HOME).toLocaleString();
+      $('since-interest').textContent = '+' + commas(interestAccrued);
+      $('since-personal').textContent = '+$' + personalGrowth.toFixed(2);
+      $('since-teslas').textContent = Math.floor(added / TESLA_PRICE).toLocaleString();
+      $('since-heartbeat').textContent = '$' + Math.round(perHeartbeat).toLocaleString();
+      $('since-bigmacs').textContent = Math.floor(added / BIG_MAC_PRICE).toLocaleString();
+      $('since-iphones').textContent = Math.floor(added / IPHONE_PRICE).toLocaleString();
+      $('since-salaries').textContent = Math.floor(added / MEDIAN_SALARY).toLocaleString();
+      $('since-tuitions').textContent = Math.floor(added / TUITION_COST).toLocaleString();
+
+      // Live-tick the BTC-priced and personal panels alongside the debt clock
+      if (lastBtc && debtAnchorAmount) {
+        const price = lastBtc.current_price;
+        const debtNow = liveDebt();
+        $('priced-btc').textContent = (debtNow / price / 1e6).toFixed(1) + 'M BTC';
+        $('pers-debt').textContent = commas(debtNow / US_POP);
+        $('pers-share-btc').textContent = ((debtNow / US_POP) / price).toFixed(3);
+      }
+
+      // Timer
+      const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+      $('visit-timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    setInterval(tick, 100);
+
+    // Init
+    async function init() {
+      const btn = $('refresh-btn');
+      btn.disabled = true; btn.textContent = '...';
+
+      let [btc, debt] = await Promise.all([fetchBTC(), fetchDebt()]);
+      let usedCache = false;
+
+      // Save fresh data; on failure, fall back to the last good values we cached.
+      if (btc) saveCache(CACHE.btc, btc);
+      else { const c = loadCache(CACHE.btc); if (c) { btc = c.data; usedCache = true; } }
+
+      if (debt) saveCache(CACHE.debt, debt);
+      else { const c = loadCache(CACHE.debt); if (c) { debt = c.data; usedCache = true; } }
+
+      if (btc && debt) {
+        render(btc, debt);
+        $('stale-note').hidden = !usedCache;
+        loadHistory(btc);                       // async, non-blocking; fills the sparkline + 1yr trend
+      } else if (!btc) {
+        $('commentary-text').innerHTML = `CoinGecko isn't answering. They're rate-limiting us, which is ironic for a site about unlimited money printing.`;
+      } else if (!debt) {
+        $('commentary-text').innerHTML = `Treasury servers down. The government can't even keep its debt counter online. Peak comedy.`;
+      }
+
+      btn.disabled = false; btn.textContent = 'Refresh';
+    }
+
+    // Auto-play music (with fallback for browser restrictions)
+    function setupAudio() {
+      const audio = $('bgMusic');
+      const btn = $('audio-btn');
+      audio.volume = 0.4; // Set volume to 40%
+
+      let muted = false;
+      try { muted = localStorage.getItem('matchup-muted') === 'true'; } catch {}
+
+      function applyMute(next) {
+        muted = next;
+        audio.muted = next; // muting, never pausing, so the track keeps running underneath
+        btn.classList.toggle('muted', next);
+        btn.setAttribute('aria-pressed', String(next));
+        const label = next ? 'Unmute background music' : 'Mute background music';
+        btn.setAttribute('aria-label', label);
+        btn.title = label;
+        try { localStorage.setItem('matchup-muted', String(next)); } catch {}
+      }
+
+      function ensurePlaying() {
+        if (audio.paused) audio.play().catch(() => {});
+      }
+
+      // Applied before play(): a muted element is always allowed to autoplay, so a stored
+      // mute preference can only improve the odds the track starts.
+      applyMute(muted);
+
+      audio.play().catch(() => {
+        // Browser blocked autoplay, will play on first user interaction
+        document.body.addEventListener('click', ensurePlaying, { once: true });
+      });
+
+      // Clicking the toggle is itself a user gesture, so it doubles as the autoplay unblock.
+      btn.addEventListener('click', () => { applyMute(!muted); ensurePlaying(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupAudio();
+      initSparkHover();
+
+      // Create sparkles (skipped when the visitor prefers reduced motion)
+      if (!REDUCE_MOTION) {
+        const sparkleContainer = document.getElementById('sparkleContainer');
+        for (let i = 0; i < 20; i++) {
+          const sparkle = document.createElement('div');
+          sparkle.className = 'sparkle';
+          sparkle.style.left = Math.random() * 100 + '%';
+          sparkle.style.animationDelay = Math.random() * 6 + 's';
+          sparkleContainer.appendChild(sparkle);
+        }
+      }
+    });
+
+    init();
+    setInterval(init, 60000);
+  </script>
+</body>
+</html>
