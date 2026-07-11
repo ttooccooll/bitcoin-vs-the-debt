@@ -1764,7 +1764,7 @@
 
     // localStorage cache so a rate-limited CoinGecko or a down Treasury API still
     // shows the last good numbers instead of dashes.
-    const CACHE = { btc: 'bvd_btc_v1', debt: 'bvd_debt_v1', hist: 'bvd_hist_v7' };
+    const CACHE = { btc: 'bvd_btc_v1', debt: 'bvd_debt_v1', hist: 'bvd_hist_v8' };
     const HIST_MAX_AGE = 6 * 3600 * 1000; // refetch the 1yr history at most every 6h
 
     function saveCache(key, data) {
@@ -1802,8 +1802,13 @@
       return debtAnchorAmount + elapsed * debtPerSec;
     }
 
-    function commas(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+    // Both guard against non-finite input so a missing figure renders as "--", never "$NaN".
+    function commas(n) {
+      if (!Number.isFinite(n)) return '--';
+      return '$' + Math.round(n).toLocaleString('en-US');
+    }
     function short(n) {
+      if (!Number.isFinite(n)) return '--';
       if (n >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
       if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
       return commas(n);
@@ -2064,14 +2069,21 @@
         const years = Math.max(1, Math.round((Date.now() - la.ms) / (365.25 * 86400 * 1000)));
         const pctOfThen = (btcToClear / la.debtInBtc) * 100;   // e.g. 2.1%
         const fewer = 100 - pctOfThen;                          // e.g. 97.9% fewer coins
-        const debtThen = la.debt, debtNow = liveDebt();
         const swing = fewer >= 0
           ? `which is <span class="arc-drop">${fewer.toFixed(0)}% fewer coins</span>`
           : `which is <strong>${Math.abs(fewer).toFixed(0)}% more coins</strong>`;
+
+        // The debt-growth clause only renders when we actually have both figures,
+        // so a cache written by an older version can never print NaN.
+        const debtNow = liveDebt();
+        const hasDebtThen = Number.isFinite(la.debt) && la.debt > 0 && debtNow > 0;
+        const tail = hasDebtThen
+          ? `, even though the debt itself grew from <strong>${short(la.debt)}</strong> to <strong>${short(debtNow)}</strong>.`
+          : `, even as the debt itself kept growing.`;
+
         arc.innerHTML =
           `${years} years ago, covering the debt would have taken <strong>${btcAmount(la.debtInBtc)}</strong>. ` +
-          `Today it takes <strong>${btcAmount(btcToClear)}</strong>, ${swing}, ` +
-          `even though the debt itself grew from <strong>${short(debtThen)}</strong> to <strong>${short(debtNow)}</strong>.`;
+          `Today it takes <strong>${btcAmount(btcToClear)}</strong>, ${swing}${tail}`;
         arc.style.display = '';
       } else if (arc) {
         arc.style.display = 'none';
