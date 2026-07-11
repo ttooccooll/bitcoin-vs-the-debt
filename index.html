@@ -2089,7 +2089,6 @@
         arc.style.display = 'none';
       }
 
-      const badge = $('priced-trend');
       const wrap = $('spark-wrap');
       if (histSeries && histSeries.points && histSeries.points.length > 1) {
         const all = histSeries.points;
@@ -2102,15 +2101,23 @@
         renderSpark('1y', oneYear);
         setSparkDelta('4y', all, btcToClear);
         setSparkDelta('1y', oneYear, btcToClear);
+      } else if (wrap) {
+        wrap.style.display = 'none';
+      }
 
-        const first = all[0].debtInBtc;
-        const change = ((btcToClear - first) / first) * 100;   // negative = fewer BTC needed now
-        const years = Math.max(1, Math.round((Date.now() - all[0].ms) / (365.25 * 86400 * 1000)));
+      // Headline badge shows the widest span we have (10yr). The 4yr and 1yr figures
+      // already appear on their own chart chips, so repeating one here would be noise.
+      const badge = $('priced-trend');
+      const headline = (la && la.debtInBtc > 0)
+        ? la
+        : (histSeries && histSeries.points && histSeries.points.length > 1 ? histSeries.points[0] : null);
+      if (headline && headline.debtInBtc > 0) {
+        const years = Math.max(1, Math.round((Date.now() - headline.ms) / (365.25 * 86400 * 1000)));
+        const change = ((btcToClear - headline.debtInBtc) / headline.debtInBtc) * 100;   // negative = fewer BTC needed now
         if (change < 0) { badge.textContent = `▼ ${Math.abs(change).toFixed(0)}% in ${years}yr`; badge.className = 'priced-badge down'; }
         else { badge.textContent = `▲ ${change.toFixed(0)}% in ${years}yr`; badge.className = 'priced-badge'; }
       } else {
         badge.textContent = 'Live'; badge.className = 'priced-badge';
-        if (wrap) wrap.style.display = 'none';
       }
     }
 
