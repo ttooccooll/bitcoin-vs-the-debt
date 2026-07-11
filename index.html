@@ -1080,6 +1080,29 @@
     }
     .priced-note strong { color: var(--text-2); }
     .spark-wrap { margin-top: 1.2rem; position: relative; z-index: 1; }
+    .spark-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+    .spark-card {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.8rem 0.85rem 0.7rem;
+    }
+    .spark-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 0.4rem; margin-bottom: 0.55rem;
+    }
+    .spark-title {
+      font-size: 0.76rem; font-weight: 700; color: var(--text-2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .spark-delta {
+      font-family: var(--mono); font-size: 0.68rem; font-weight: 700;
+      padding: 0.13rem 0.42rem; border-radius: 999px; white-space: nowrap;
+      color: var(--text-3); background: var(--surface-3);
+    }
+    .spark-delta.down { color: var(--green); background: rgba(0,200,83,0.12); }
+    .spark-delta.up { color: var(--red); background: var(--red-dim); }
+    .spark-sub {
+      font-size: 0.64rem; color: var(--text-3); text-align: center; margin-top: 0.3rem;
+    }
     .spark-plot { position: relative; touch-action: pan-y; cursor: crosshair; }
     .spark { width: 100%; height: 56px; display: block; }
     .spark-cursor {
@@ -1298,6 +1321,7 @@
       .priced-value { font-size: clamp(1.7rem, 9vw, 2.6rem); }
       .priced-note { font-size: 0.82rem; }
       .spark-caption { font-size: 0.68rem; }
+      .spark-grid { grid-template-columns: 1fr; gap: 0.75rem; }
 
       .personal { padding: 1.25rem 1rem; }
       .personal-title { font-size: 1.3rem; }
@@ -1482,15 +1506,40 @@
         <div class="priced-value" id="priced-btc">-- BTC</div>
         <div class="priced-note" id="priced-note">Working out how many bitcoin it would take to erase the debt...</div>
         <div class="spark-wrap" id="spark-wrap">
-          <div class="spark-plot" id="spark-plot">
-            <svg class="spark" id="priced-spark" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"></svg>
-            <div class="spark-cursor" id="spark-cursor"></div>
-            <div class="spark-dot" id="spark-dot"></div>
-            <div class="spark-tip" id="spark-tip"></div>
+          <div class="spark-grid">
+            <div class="spark-card" id="card-4y">
+              <div class="spark-head">
+                <span class="spark-title">4 Years</span>
+                <span class="spark-delta" id="delta-4y">--</span>
+              </div>
+              <div class="spark-plot" id="plot-4y">
+                <svg class="spark" id="svg-4y" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+                <div class="spark-cursor" id="cursor-4y"></div>
+                <div class="spark-dot" id="dot-4y"></div>
+                <div class="spark-tip" id="tip-4y"></div>
+              </div>
+              <div class="spark-axis"><span id="start-4y">4yr ago</span><span>now</span></div>
+              <div class="spark-sub">one halving cycle</div>
+              <p class="sr-only" id="sr-4y"></p>
+            </div>
+
+            <div class="spark-card" id="card-1y">
+              <div class="spark-head">
+                <span class="spark-title">1 Year</span>
+                <span class="spark-delta" id="delta-1y">--</span>
+              </div>
+              <div class="spark-plot" id="plot-1y">
+                <svg class="spark" id="svg-1y" viewBox="0 0 100 36" preserveAspectRatio="none" aria-hidden="true"></svg>
+                <div class="spark-cursor" id="cursor-1y"></div>
+                <div class="spark-dot" id="dot-1y"></div>
+                <div class="spark-tip" id="tip-1y"></div>
+              </div>
+              <div class="spark-axis"><span id="start-1y">1yr ago</span><span>now</span></div>
+              <div class="spark-sub">recent detail</div>
+              <p class="sr-only" id="sr-1y"></p>
+            </div>
           </div>
-          <div class="spark-axis"><span id="spark-start">4yr ago</span><span id="spark-end">now</span></div>
-          <div class="spark-caption">How much Bitcoin it would take to cover the debt over the past four years, one full halving cycle. It shrinks as BTC climbs. Hover any point for the details.</div>
-          <p class="sr-only" id="spark-sr"></p>
+          <div class="spark-caption">Bitcoin needed to cover the debt. The four-year view spans a full halving cycle, while the one-year view zooms in on recent moves. Each chart scales to its own range. Hover any point for the details.</div>
         </div>
       </div>
     </div>
@@ -1900,13 +1949,20 @@
       return new Date(ms).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     }
 
-    let sparkGeom = null;   // { points, coords, H } for hover lookups
+    const SPARK_KEYS = ['4y', '1y'];
+    const sparkGeoms = {};   // key -> { points, coords, H } for hover lookups
 
-    function renderSpark(points) {
-      const svg = $('priced-spark');
-      const wrap = $('spark-wrap');
-      if (!svg || !points || points.length < 2) { if (wrap) wrap.style.display = 'none'; sparkGeom = null; return; }
-      if (wrap) wrap.style.display = '';
+    // Each chart scales to its own min/max, so the 1yr view shows recent detail
+    // instead of being flattened by the 4yr peak.
+    function renderSpark(key, points) {
+      const svg = $(`svg-${key}`);
+      const card = $(`card-${key}`);
+      if (!svg || !points || points.length < 2) {
+        if (card) card.style.display = 'none';
+        sparkGeoms[key] = null;
+        return;
+      }
+      if (card) card.style.display = '';
 
       const vals = points.map(p => p.debtInBtc);
       const min = Math.min(...vals), max = Math.max(...vals);
@@ -1917,31 +1973,42 @@
         const y = padY + (1 - (p.debtInBtc - min) / range) * (H - padY * 2);
         return [x, y];
       });
-      sparkGeom = { points, coords, H };
+      sparkGeoms[key] = { points, coords, H };
       const line = coords.map(c => c[0].toFixed(2) + ',' + c[1].toFixed(2)).join(' ');
       const area = `0,${H} ` + line + ` ${W},${H}`;
       const end = coords[coords.length - 1];
+      const gid = `sparkFill-${key}`;   // unique per chart, or the two SVGs would collide
       svg.innerHTML =
-        `<defs><linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">` +
+        `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">` +
         `<stop offset="0%" stop-color="${ORANGE}" stop-opacity="0.35"/>` +
         `<stop offset="100%" stop-color="${ORANGE}" stop-opacity="0"/></linearGradient></defs>` +
-        `<polygon points="${area}" fill="url(#sparkFill)"/>` +
+        `<polygon points="${area}" fill="url(#${gid})"/>` +
         `<polyline points="${line}" fill="none" stroke="${ORANGE}" stroke-width="1.5" ` +
         `vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>` +
         `<circle cx="${end[0].toFixed(2)}" cy="${end[1].toFixed(2)}" r="2" fill="${ORANGE}"/>`;
-      $('spark-start').textContent = fmtDate(points[0].ms);
-      $('spark-end').textContent = 'now';
+      $(`start-${key}`).textContent = fmtDate(points[0].ms);
 
-      const sr = $('spark-sr');
+      const sr = $(`sr-${key}`);
       if (sr) {
         const startM = (points[0].debtInBtc / 1e6).toFixed(0);
         const endM = (points[points.length - 1].debtInBtc / 1e6).toFixed(0);
-        sr.textContent = `Chart: the bitcoin needed to cover the national debt fell from about ${startM} million BTC in ${fmtDate(points[0].ms)} to about ${endM} million BTC now.`;
+        sr.textContent = `Chart: the bitcoin needed to cover the national debt went from about ${startM} million BTC in ${fmtDate(points[0].ms)} to about ${endM} million BTC now.`;
       }
     }
 
+    // Percent change from the start of a series to the current live figure.
+    function setSparkDelta(key, points, currentVal) {
+      const el = $(`delta-${key}`);
+      if (!el) return;
+      if (!points || points.length < 2) { el.textContent = '--'; el.className = 'spark-delta'; return; }
+      const first = points[0].debtInBtc;
+      const change = ((currentVal - first) / first) * 100;
+      if (change < 0) { el.textContent = `▼ ${Math.abs(change).toFixed(0)}%`; el.className = 'spark-delta down'; }
+      else { el.textContent = `▲ ${change.toFixed(0)}%`; el.className = 'spark-delta up'; }
+    }
+
     // "The debt, priced in Bitcoin": how many BTC it would take to erase the debt,
-    // plus the 1-year trend from the historical series.
+    // plus a 4-year and a 1-year view of the same series side by side.
     function renderPricedInBtc(btc) {
       if (!btc) return;
       const btcToClear = liveDebt() / btc.current_price;   // number of BTC
@@ -1955,17 +2022,27 @@
         `<strong>every coin that can exist by ${capMult.toFixed(1)}×</strong>.`;
 
       const badge = $('priced-trend');
+      const wrap = $('spark-wrap');
       if (histSeries && histSeries.points && histSeries.points.length > 1) {
-        const pts = histSeries.points;
-        const first = pts[0].debtInBtc;
+        const all = histSeries.points;
+        const yearAgo = Date.now() - 365.25 * 86400 * 1000;
+        const recent = all.filter(p => p.ms >= yearAgo);
+        const oneYear = recent.length > 1 ? recent : all;
+
+        if (wrap) wrap.style.display = '';
+        renderSpark('4y', all);
+        renderSpark('1y', oneYear);
+        setSparkDelta('4y', all, btcToClear);
+        setSparkDelta('1y', oneYear, btcToClear);
+
+        const first = all[0].debtInBtc;
         const change = ((btcToClear - first) / first) * 100;   // negative = fewer BTC needed now
-        const years = Math.max(1, Math.round((Date.now() - pts[0].ms) / (365.25 * 86400 * 1000)));
-        const span = `${years}yr`;
-        if (change < 0) { badge.textContent = `▼ ${Math.abs(change).toFixed(0)}% in ${span}`; badge.className = 'priced-badge down'; }
-        else { badge.textContent = `▲ ${change.toFixed(0)}% in ${span}`; badge.className = 'priced-badge'; }
-        renderSpark(pts);
+        const years = Math.max(1, Math.round((Date.now() - all[0].ms) / (365.25 * 86400 * 1000)));
+        if (change < 0) { badge.textContent = `▼ ${Math.abs(change).toFixed(0)}% in ${years}yr`; badge.className = 'priced-badge down'; }
+        else { badge.textContent = `▲ ${change.toFixed(0)}% in ${years}yr`; badge.className = 'priced-badge'; }
       } else {
         badge.textContent = 'Live'; badge.className = 'priced-badge';
+        if (wrap) wrap.style.display = 'none';
       }
     }
 
@@ -1990,55 +2067,59 @@
     }
 
     // Sparkline hover: snap to the nearest data point and show its value + date.
-    function moveSparkCursor(clientX) {
-      if (!sparkGeom) return;
-      const plot = $('spark-plot');
+    function moveSparkCursor(key, clientX) {
+      const geom = sparkGeoms[key];
+      if (!geom) return;
+      const plot = $(`plot-${key}`);
+      if (!plot) return;
       const rect = plot.getBoundingClientRect();
       if (!rect.width) return;
 
       let frac = (clientX - rect.left) / rect.width;
       frac = Math.max(0, Math.min(1, frac));
-      const n = sparkGeom.coords.length;
+      const n = geom.coords.length;
       const idx = Math.round(frac * (n - 1));
-      const [cx, cy] = sparkGeom.coords[idx];
-      const p = sparkGeom.points[idx];
+      const [cx, cy] = geom.coords[idx];
+      const p = geom.points[idx];
 
       const leftPct = cx;                          // viewBox x (0 to 100) maps directly to width %
-      const topPx = (cy / sparkGeom.H) * rect.height;
+      const topPx = (cy / geom.H) * rect.height;
 
-      $('spark-cursor').style.left = leftPct + '%';
-      $('spark-dot').style.left = leftPct + '%';
-      $('spark-dot').style.top = topPx + 'px';
+      $(`cursor-${key}`).style.left = leftPct + '%';
+      $(`dot-${key}`).style.left = leftPct + '%';
+      $(`dot-${key}`).style.top = topPx + 'px';
 
-      const tip = $('spark-tip');
+      const tip = $(`tip-${key}`);
       tip.innerHTML = `<strong>${(p.debtInBtc / 1e6).toFixed(1)}M BTC</strong>` +
                       `<span class="tip-date">${fmtDate(p.ms)}</span>`;
       tip.style.left = leftPct + '%';
       tip.style.top = topPx + 'px';
-      // Keep the tooltip inside the panel: nudge horizontally near the edges,
+      // Keep the tooltip inside the card: nudge horizontally near the edges,
       // and drop it below the point when the point sits high on the chart.
       let tx = '-50%';
-      if (leftPct < 16) tx = '-8%'; else if (leftPct > 84) tx = '-92%';
+      if (leftPct < 22) tx = '-8%'; else if (leftPct > 78) tx = '-92%';
       const ty = topPx < rect.height * 0.45 ? 'calc(12px)' : 'calc(-100% - 10px)';
       tip.style.transform = `translate(${tx}, ${ty})`;
 
-      $('spark-cursor').style.opacity = 1;
-      $('spark-dot').style.opacity = 1;
+      $(`cursor-${key}`).style.opacity = 1;
+      $(`dot-${key}`).style.opacity = 1;
       tip.style.opacity = 1;
     }
 
-    function hideSparkCursor() {
-      ['spark-cursor', 'spark-dot', 'spark-tip'].forEach(id => { const el = $(id); if (el) el.style.opacity = 0; });
+    function hideSparkCursor(key) {
+      [`cursor-${key}`, `dot-${key}`, `tip-${key}`].forEach(id => { const el = $(id); if (el) el.style.opacity = 0; });
     }
 
     function initSparkHover() {
-      const plot = $('spark-plot');
-      if (!plot) return;
-      plot.addEventListener('mousemove', e => moveSparkCursor(e.clientX));
-      plot.addEventListener('mouseleave', hideSparkCursor);
-      plot.addEventListener('touchstart', e => { if (e.touches[0]) moveSparkCursor(e.touches[0].clientX); }, { passive: true });
-      plot.addEventListener('touchmove', e => { if (e.touches[0]) moveSparkCursor(e.touches[0].clientX); }, { passive: true });
-      plot.addEventListener('touchend', hideSparkCursor);
+      SPARK_KEYS.forEach(key => {
+        const plot = $(`plot-${key}`);
+        if (!plot) return;
+        plot.addEventListener('mousemove', e => moveSparkCursor(key, e.clientX));
+        plot.addEventListener('mouseleave', () => hideSparkCursor(key));
+        plot.addEventListener('touchstart', e => { if (e.touches[0]) moveSparkCursor(key, e.touches[0].clientX); }, { passive: true });
+        plot.addEventListener('touchmove', e => { if (e.touches[0]) moveSparkCursor(key, e.touches[0].clientX); }, { passive: true });
+        plot.addEventListener('touchend', () => hideSparkCursor(key));
+      });
     }
 
     // Ticker
