@@ -1966,7 +1966,8 @@
           }
           // Only use it if we actually have data near the target date.
           if (Math.abs(best[0] - targetMs) < 365.25 * 86400 * 1000) {
-            longAgo = { ms: best[0], price: best[1], debtInBtc: debtAt(best[0]) / best[1] };
+            const debtThen = debtAt(best[0]);
+            longAgo = { ms: best[0], price: best[1], debt: debtThen, debtInBtc: debtThen / best[1] };
           }
         }
 
@@ -2061,13 +2062,16 @@
       const la = histSeries && histSeries.longAgo;
       if (arc && la && la.debtInBtc > 0) {
         const years = Math.max(1, Math.round((Date.now() - la.ms) / (365.25 * 86400 * 1000)));
-        const drop = ((btcToClear - la.debtInBtc) / la.debtInBtc) * 100;
-        const verdict = drop < 0
-          ? `A <span class="arc-drop">${Math.abs(drop).toFixed(0)}% collapse</span>.`
-          : `A <strong>${drop.toFixed(0)}% climb</strong>.`;
+        const pctOfThen = (btcToClear / la.debtInBtc) * 100;   // e.g. 2.1%
+        const fewer = 100 - pctOfThen;                          // e.g. 97.9% fewer coins
+        const debtThen = la.debt, debtNow = liveDebt();
+        const swing = fewer >= 0
+          ? `which is <span class="arc-drop">${fewer.toFixed(0)}% fewer coins</span>`
+          : `which is <strong>${Math.abs(fewer).toFixed(0)}% more coins</strong>`;
         arc.innerHTML =
-          `${years} years ago it would have taken <strong>${btcAmount(la.debtInBtc)}</strong> ` +
-          `to cover the debt. Today it takes <strong>${btcAmount(btcToClear)}</strong>. ${verdict}`;
+          `${years} years ago, covering the debt would have taken <strong>${btcAmount(la.debtInBtc)}</strong>. ` +
+          `Today it takes <strong>${btcAmount(btcToClear)}</strong>, ${swing}, ` +
+          `even though the debt itself grew from <strong>${short(debtThen)}</strong> to <strong>${short(debtNow)}</strong>.`;
         arc.style.display = '';
       } else if (arc) {
         arc.style.display = 'none';
