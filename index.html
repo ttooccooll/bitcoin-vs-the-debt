@@ -1079,6 +1079,16 @@
       margin-top: 0.6rem; line-height: 1.55; position: relative; z-index: 1;
     }
     .priced-note strong { color: var(--text-2); }
+
+    .priced-arc {
+      margin-top: 0.9rem; padding: 0.75rem 1rem;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; text-align: center;
+      font-size: 0.87rem; color: var(--text-2); line-height: 1.6;
+      position: relative; z-index: 1;
+    }
+    .priced-arc strong { color: var(--orange); font-family: var(--mono); font-weight: 700; }
+    .priced-arc .arc-drop { color: var(--green); font-weight: 700; }
     .spark-wrap { margin-top: 1.2rem; position: relative; z-index: 1; }
     .spark-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
     .spark-card {
@@ -1320,6 +1330,7 @@
       .priced-label { font-size: 0.78rem; }
       .priced-value { font-size: clamp(1.7rem, 9vw, 2.6rem); }
       .priced-note { font-size: 0.82rem; }
+      .priced-arc { font-size: 0.8rem; padding: 0.65rem 0.8rem; }
       .spark-caption { font-size: 0.68rem; }
       .spark-grid { grid-template-columns: 1fr; gap: 0.75rem; }
 
@@ -1505,6 +1516,7 @@
         </div>
         <div class="priced-value" id="priced-btc">-- BTC</div>
         <div class="priced-note" id="priced-note">Working out how many bitcoin it would take to erase the debt...</div>
+        <div class="priced-arc" id="priced-arc" style="display:none"></div>
         <div class="spark-wrap" id="spark-wrap">
           <div class="spark-grid">
             <div class="spark-card" id="card-4y">
@@ -1728,7 +1740,8 @@
     const KRAKEN_OHLC_API = 'https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=10080';
     // CoinGecko fallback (its public API caps historical data at 365 days).
     const BTC_HISTORY_API = days => `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`;
-    const HISTORY_YEARS = 4;   // ~one Bitcoin halving cycle
+    const HISTORY_YEARS = 4;    // charts span ~one Bitcoin halving cycle
+    const LONG_ARC_YEARS = 10;  // the long-arc callout, derived live (never hardcoded)
     const DEBT_HISTORY_API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=3000&fields=record_date,tot_pub_debt_out_amt';
 
     const BTC_SUPPLY = 21_000_000;
@@ -1751,7 +1764,7 @@
 
     // localStorage cache so a rate-limited CoinGecko or a down Treasury API still
     // shows the last good numbers instead of dashes.
-    const CACHE = { btc: 'bvd_btc_v1', debt: 'bvd_debt_v1', hist: 'bvd_hist_v6' };
+    const CACHE = { btc: 'bvd_btc_v1', debt: 'bvd_debt_v1', hist: 'bvd_hist_v7' };
     const HIST_MAX_AGE = 6 * 3600 * 1000; // refetch the 1yr history at most every 6h
 
     function saveCache(key, data) {
@@ -1941,7 +1954,23 @@
         const last = prices[prices.length - 1];
         if (!points.length || points[points.length - 1].ms !== last[0]) push(last[0], last[1]);
 
-        return points.length > 1 ? { points } : null;
+        // Long-arc anchor: the same figure ~10 years back, taken from the UNCLIPPED price
+        // history and the real debt on that date. Derived every load, never hardcoded.
+        let longAgo = null;
+        const targetMs = Date.now() - LONG_ARC_YEARS * 365.25 * 86400 * 1000;
+        const covered = allPrices.filter(p => p[0] >= debtAsc[0].ms && p[1] > 0);
+        if (covered.length) {
+          let best = covered[0];
+          for (const p of covered) {
+            if (Math.abs(p[0] - targetMs) < Math.abs(best[0] - targetMs)) best = p;
+          }
+          // Only use it if we actually have data near the target date.
+          if (Math.abs(best[0] - targetMs) < 365.25 * 86400 * 1000) {
+            longAgo = { ms: best[0], price: best[1], debtInBtc: debtAt(best[0]) / best[1] };
+          }
+        }
+
+        return points.length > 1 ? { points, longAgo } : null;
       } catch { return null; }
     }
 
@@ -1996,6 +2025,12 @@
       }
     }
 
+    // "33.9 billion bitcoin" / "617 million bitcoin"
+    function btcAmount(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(1) + ' billion bitcoin';
+      return Math.round(n / 1e6).toLocaleString('en-US') + ' million bitcoin';
+    }
+
     // Percent change from the start of a series to the current live figure.
     function setSparkDelta(key, points, currentVal) {
       const el = $(`delta-${key}`);
@@ -2020,6 +2055,23 @@
         `Erasing the debt would take <strong>${inMillions.toFixed(0)} million bitcoin</strong>, ` +
         `and only <strong>21 million</strong> will ever exist. That makes the debt bigger than ` +
         `<strong>every coin that can exist by ${capMult.toFixed(1)}×</strong>.`;
+
+      // Long-arc callout, computed from live data each render.
+      const arc = $('priced-arc');
+      const la = histSeries && histSeries.longAgo;
+      if (arc && la && la.debtInBtc > 0) {
+        const years = Math.max(1, Math.round((Date.now() - la.ms) / (365.25 * 86400 * 1000)));
+        const drop = ((btcToClear - la.debtInBtc) / la.debtInBtc) * 100;
+        const verdict = drop < 0
+          ? `A <span class="arc-drop">${Math.abs(drop).toFixed(0)}% collapse</span>.`
+          : `A <strong>${drop.toFixed(0)}% climb</strong>.`;
+        arc.innerHTML =
+          `${years} years ago it would have taken <strong>${btcAmount(la.debtInBtc)}</strong> ` +
+          `to cover the debt. Today it takes <strong>${btcAmount(btcToClear)}</strong>. ${verdict}`;
+        arc.style.display = '';
+      } else if (arc) {
+        arc.style.display = 'none';
+      }
 
       const badge = $('priced-trend');
       const wrap = $('spark-wrap');
