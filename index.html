@@ -13,7 +13,7 @@
   <meta property="og:description" content="A live scoreboard pitting Bitcoin's market cap against the US national debt.">
   <meta property="og:image" content="https://ttooccooll.github.io/bitcoin-vs-the-debt/og-image.png">
   <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Bitcoin vs. The Debt">
   <meta name="twitter:description" content="A live scoreboard pitting Bitcoin's market cap against the US national debt.">
@@ -1746,7 +1746,7 @@
     const DEBT_HISTORY_API = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page%5Bsize%5D=3000&fields=record_date,tot_pub_debt_out_amt';
 
     const BTC_SUPPLY = 21_000_000;
-    const US_POP = 335_000_000;
+    const US_POP = 342_000_000;             // Census Bureau estimate, ~342M as of early 2026 — refresh annually
     const US_TAXPAYERS = 150_000_000;
     const DEFAULT_DEBT_PER_SEC = 136_574;   // fallback until we derive the live rate from Treasury data
     let debtPerSec = DEFAULT_DEBT_PER_SEC;
