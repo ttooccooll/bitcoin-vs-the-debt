@@ -1445,7 +1445,8 @@
   <canvas id="particles" aria-hidden="true"></canvas>
 
   <audio id="bgMusic" loop autoplay>
-    <source src="Work Harder.wav" type="audio/wav">
+    <source src="Work Harder.webm" type="audio/webm; codecs=opus">
+    <source src="Work Harder.mp3" type="audio/mpeg">
   </audio>
 
   <div class="top-bar">
@@ -1564,11 +1565,11 @@
         </div>
         <div class="debt-clock-value" id="debt-live">$--</div>
         <div class="debt-clock-rate">
-          <span id="rate-sec">+$136,574/sec</span>
+          <span id="rate-sec">--/sec</span>
           <span class="debt-clock-sep">·</span>
-          <span id="rate-min">+$8.2M/min</span>
+          <span id="rate-min">--/min</span>
           <span class="debt-clock-sep">·</span>
-          <span id="rate-day">+$11.8B/day</span>
+          <span id="rate-day">--/day</span>
         </div>
       </div>
     </div>
@@ -1750,6 +1751,9 @@
     const DEFAULT_DEBT_PER_SEC = 136_574;   // fallback until we derive the live rate from Treasury data
     let debtPerSec = DEFAULT_DEBT_PER_SEC;
     const MEDIAN_HOME = 417_000;
+    const INTEREST_RATE_ANNUAL = 0.032;     // ~3.2% weighted average rate across outstanding Treasury debt
+    const BTC_GENESIS_YEAR = 2009;          // the genesis block
+    const DEBT_ORIGIN_YEAR = 1790;          // the US assumed the states' war debts
     const ORANGE = '#f7931a';
 
     // Compact number formatter for rate labels (e.g. 8.2M, 11.8B).
@@ -1800,6 +1804,13 @@
       if (!debtAnchorAmount) return 0;
       const elapsed = Math.max(0, (Date.now() - debtAnchorTime) / 1000);
       return debtAnchorAmount + elapsed * debtPerSec;
+    }
+
+    // Interest accruing on the live debt figure. Single source of truth: the "since you
+    // arrived" clock, the play-by-play and the satire panel all quote this same number,
+    // so they can never disagree with each other on screen.
+    function interestPerSec() {
+      return (liveDebt() || 36e12) * INTEREST_RATE_ANNUAL / (365.25 * 86400);
     }
 
     // Both guard against non-finite input so a missing figure renders as "--", never "$NaN".
@@ -2225,6 +2236,10 @@
       const debtDaily = debtPerSec * 86400;
       const dailyMax = Math.max(Math.abs(btcDaily), debtDaily) || 1;
 
+      const thisYear = new Date().getFullYear();
+      const btcAge = thisYear - BTC_GENESIS_YEAR;
+      const debtAge = thisYear - DEBT_ORIGIN_YEAR;
+
       const rows = [
         {
           stat: 'Market Cap', note: `debt leads ${(debtAmt / cap).toFixed(0)}×`, winner: 'debt',
@@ -2243,9 +2258,9 @@
           debt: { val: '∞', pct: 100, infinite: true },
         },
         {
-          stat: 'Age', note: 'debt since 1790', winner: 'debt',
-          btc: { val: '17 yrs', pct: (17 / 236) * 100 },
-          debt: { val: '236 yrs', pct: 100 },
+          stat: 'Age', note: `debt since ${DEBT_ORIGIN_YEAR}`, winner: 'debt',
+          btc: { val: `${btcAge} yrs`, pct: (btcAge / debtAge) * 100 },
+          debt: { val: `${debtAge} yrs`, pct: 100 },
         },
         {
           stat: 'Central Control', note: 'who sets the rules', winner: 'btc',
@@ -2289,7 +2304,7 @@
 
       $('momentum-fill').style.width = normalized + '%';
       $('momentum-btc-text').textContent = `BTC ${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
-      $('momentum-debt-text').textContent = '+$11.8B/day';
+      $('momentum-debt-text').textContent = `+$${shortNum(debtPerSec * 86400)}/day`;
 
       const badge = $('momentum-badge');
       if (change > 3) { badge.textContent = 'BTC Hot'; badge.className = 'momentum-badge hot'; }
@@ -2328,7 +2343,7 @@
         { time: fmt(now), text: `Fresh data in. BTC at <span class="orange">${commas(btc.current_price)}</span> against a debt of <span class="red">${short(debt.amount)}</span>, and the scoreboard updates.` },
         { time: fmt(now), text: `Bitcoin sits at <span class="hl">${pct.toFixed(2)}%</span> of the debt, outweighed ${mult.toFixed(0)}x. It's the underdog here, though this particular Goliath owns a money printer.` },
         { time: fmt(new Date(now - 1800000)), text: `Since midnight the US quietly added <span class="red">${short(debtSinceMidnight)}</span> to the tab, roughly ${Math.round(debtSinceMidnight / MEDIAN_HOME).toLocaleString()} homes worth of debt, most of it while you were asleep.` },
-        { time: 'Daily', text: `Interest payments run about <span class="red">$2.9 billion per day</span>, close to $2M a minute flowing from taxpayers straight to bondholders, and the meter never stops.` },
+        { time: 'Daily', text: `Interest payments run about <span class="red">${short(interestPerSec() * 86400)} per day</span>, close to $${shortNum(interestPerSec() * 60)} a minute flowing from taxpayers straight to bondholders, and the meter never stops.` },
         { time: 'Record', text: `BTC all-time high sits at <span class="orange">${commas(btc.ath)}</span>, and it's currently <span class="${btc.ath_change_percentage >= 0 ? 'orange' : 'red'}">${btc.ath_change_percentage.toFixed(1)}%</span> away. ${btc.ath_change_percentage > -5 ? 'Knocking on the door.' : 'Still a ways to climb.'}` },
       ];
 
@@ -2337,7 +2352,7 @@
       } else if (btc.price_change_percentage_24h > 2) {
         plays.push({ time: '24h', text: `Solid day for Bitcoin, up <span class="orange">+${btc.price_change_percentage_24h.toFixed(1)}%</span>. These are small moves in a long game.` });
       } else if (btc.price_change_percentage_24h < -5) {
-        plays.push({ time: '24h', text: `Rough day for Bitcoin, down <span class="red">${btc.price_change_percentage_24h.toFixed(1)}%</span>. The debt added another $11.8 billion, because it doesn't have down days.` });
+        plays.push({ time: '24h', text: `Rough day for Bitcoin, down <span class="red">${btc.price_change_percentage_24h.toFixed(1)}%</span>. The debt added another <span class="red">${short(debtPerSec * 86400)}</span>, because it doesn't have down days.` });
       } else if (btc.price_change_percentage_24h < -2) {
         plays.push({ time: '24h', text: `Bitcoin is sliding <span class="red">${btc.price_change_percentage_24h.toFixed(1)}%</span>, a bad day at the office, while Treasury keeps the printer humming.` });
       }
@@ -2355,14 +2370,15 @@
       const hourNow = new Date().getHours() + new Date().getMinutes() / 60;
       const debtToday = debtPerSec * hourNow * 3600;
       const perBaby = Math.round(debtAmt / US_POP / 1000);
-      const interestPerMin = 2_000_000;
+      const interestPerMin = interestPerSec() * 60;
+      const interestPerRead = interestPerSec() * 15;   // ~15 seconds to read the sentence
 
       const items = [
         `<strong>The US now spends more on interest than on defense.</strong> The world's largest military budget just got body-checked by a spreadsheet, and nobody's quite sure who to bomb about it.`,
         `<strong>Every American newborn owes $${perBaby}k before their first breath.</strong> There's no consent form and no way to opt out, just a birth certificate that doubles as an invoice. Welcome to Earth, kid. The national credit card is maxed and your name is on it.`,
         `<strong>Today alone, the debt grew by ${short(debtToday)}.</strong> That happened while people argued on Twitter about whether a $5 coffee is a waste of money. The government spent ${Math.round(debtToday / MEDIAN_HOME).toLocaleString()} homes' worth before lunch and nobody blinked.`,
         `<strong>Bitcoin's hard cap is 21 million, fixed forever.</strong> No act of Congress can change it, and there's no emergency-powers loophole or Fed press conference about "necessary adjustments" that touches it. The supply is simply the supply.`,
-        `<strong>At current rates, interest costs $${(interestPerMin).toLocaleString()} a minute.</strong> In the time it took to read this sentence, taxpayers racked up roughly $${(interestPerMin / 4).toLocaleString()} more, and that's just the interest, not a cent of the principal.`,
+        `<strong>At current rates, interest costs ${commas(interestPerMin)} a minute.</strong> In the time it took to read this sentence, taxpayers racked up roughly ${commas(interestPerRead)} more, and that's just the interest, not a cent of the principal.`,
       ];
 
       $('satire-items').innerHTML = items.map(t => `<div class="satire-item">${t}</div>`).join('');
@@ -2453,7 +2469,6 @@
     // Tick (runs every 100ms)
     const TESLA_PRICE = 44_000;
     const TUITION_COST = 26_000;
-    const INTEREST_RATE_ANNUAL = 0.032; // ~3.2% weighted avg interest rate
     const HEARTBEATS_PER_SEC = 1.2; // avg resting
     const BIG_MAC_PRICE = 5.69;
     const IPHONE_PRICE = 999;
@@ -2470,8 +2485,7 @@
       // Since you arrived
       const sec = (Date.now() - openedAt) / 1000;
       const added = sec * debtPerSec;
-      const interestPerSec = (debtAnchorAmount || 36e12) * INTEREST_RATE_ANNUAL / (365.25 * 86400);
-      const interestAccrued = sec * interestPerSec;
+      const interestAccrued = sec * interestPerSec();
       const personalGrowth = added / US_POP;
       const heartbeats = sec * HEARTBEATS_PER_SEC;
       const perHeartbeat = added / heartbeats;
