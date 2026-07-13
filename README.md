@@ -21,7 +21,7 @@ Last-good values are cached in `localStorage`, so a rate-limited or offline API 
 
 ## Running it
 
-Open `index.html` in a browser. That's it. For the background music to play, keep `Work Harder.wav` alongside it; without the file the page still works, just silently.
+Open `index.html` in a browser. That's it. For the background music to play, keep `Work Harder.webm` (and the `Work Harder.mp3` fallback, for browsers that don't do WebM/Opus) alongside it; without the files the page still works, just silently.
 
 ## Notes
 

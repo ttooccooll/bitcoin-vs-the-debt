@@ -14,7 +14,7 @@ A live, interactive financial showdown presented like a sports broadcast. Bitcoi
 
 - **US National Debt**: Treasury Fiscal Data API
   - Endpoint: `https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny`
-  - Live estimate ticks at $136,574/second based on average daily growth ($11.8B/day)
+  - Live estimate ticks at a per-second rate derived from the trailing year of Treasury records (falling back to $136,574/sec only if that figure looks corrupt)
 
 ## The Comparison
 
@@ -89,7 +89,7 @@ Dark humor section with statistics about the debt crisis:
 - Scoreboard flash effect
 
 ### Audio
-- Auto-playing background music ("Work Harder.wav")
+- Auto-playing background music ("Work Harder.webm", Opus; "Work Harder.mp3" fallback)
 - Plays on user interaction if browser blocks autoplay
 
 ## Responsive Design
@@ -125,6 +125,7 @@ Auto-refreshes every 60 seconds.
 
 ```
 index.html      - Main application
-Work Harder.wav - Background music (auto-plays)
+Work Harder.webm - Background music, Opus (auto-plays)
+Work Harder.mp3  - Same track, fallback for browsers without WebM/Opus
 SPEC.md         - This file
 ```
